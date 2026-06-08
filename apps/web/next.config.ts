@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-declare const process: { env: { INTERNAL_API_URL?: string; NEXT_STANDALONE?: string } };
+declare const process: { env: { INTERNAL_API_URL?: string; NEXT_STANDALONE?: string; STATIC_EXPORT?: string } };
 
 const isStaticExport = process.env.STATIC_EXPORT === "true";
 

@@ -4,6 +4,7 @@ export type SessionUser = {
   id: string;
   tenantId: string;
   email: string;
+  notificationEmail: string | null;
   name: string;
   profileColor: string;
   avatarUrl: string | null;

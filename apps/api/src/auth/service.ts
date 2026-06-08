@@ -49,7 +49,7 @@ export async function buildUserSession(userId: string) {
   });
   const roles = user.roles.map((item) => item.role.key);
   const permissions = [...new Set(user.roles.flatMap((item) => item.role.permissions.map((rp) => rp.permission.key)))];
-  return { id: user.id, tenantId: user.tenantId, email: user.email, name: user.name, profileColor: user.profileColor, avatarUrl: user.avatarUrl, roles, permissions };
+  return { id: user.id, tenantId: user.tenantId, email: user.email, notificationEmail: user.notificationEmail, name: user.name, profileColor: user.profileColor, avatarUrl: user.avatarUrl, roles, permissions };
 }
 
 async function issueSession(userId: string) {
@@ -74,19 +74,15 @@ export async function login(identifier: string, password: string) {
 
 export function getAutoLoginStatus() {
   const enabled = env.AUTOLOGIN_ENABLED && (env.NODE_ENV !== "production" || env.AUTOLOGIN_ALLOW_PRODUCTION);
-  return {
-    enabled,
-    identifier: enabled ? env.AUTOLOGIN_IDENTIFIER ?? "admin" : null
-  };
+  return { enabled };
 }
 
-export async function autoLogin() {
+export async function autoLogin(identifier?: string) {
   const status = getAutoLoginStatus();
-  if (!status.enabled || !status.identifier) {
-    throw new Error("Autologin desactivado.");
-  }
-
-  const email = resolveLoginEmail(status.identifier);
+  if (!status.enabled) throw new Error("Autologin desactivado.");
+  const resolvedIdentifier = identifier || env.AUTOLOGIN_IDENTIFIER;
+  if (!resolvedIdentifier) throw new Error("No hay sesión anterior.");
+  const email = resolveLoginEmail(resolvedIdentifier);
   const user = await prisma.user.findFirst({
     where: { email, deletedAt: null, isActive: true }
   });

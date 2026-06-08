@@ -76,6 +76,7 @@ model User {
   email               String
   name                String
   phone               String?
+  notificationEmail   String?
   profileColor        String                @default("#0f766e")
   avatarUrl           String?
   passwordHash        String

@@ -137,20 +137,31 @@ async function sendNotificationEmails(notifications: NotificationInput[]) {
       deletedAt: null,
       isActive: true
     },
-    select: { id: true, email: true, name: true }
+    select: { id: true, email: true, notificationEmail: true, name: true }
   });
   const usersById = new Map(users.map((user) => [user.id, user]));
   const contexts = await loadNotificationContexts(notifications);
 
   for (const notification of notifications) {
     const user = usersById.get(notification.userId);
-    if (!user?.email || !isDeliverableEmail(user.email)) {
+    if (!user) {
+      logSession({
+        type: "email_skipped",
+        tenantId: notification.tenantId,
+        actorId: notification.userId,
+        message: "Destinatario no encontrado en BD",
+        data: { notificationType: notification.type, email: null }
+      });
+      continue;
+    }
+    const targetEmail = (user.notificationEmail && isDeliverableEmail(user.notificationEmail)) ? user.notificationEmail : user.email;
+    if (!targetEmail || !isDeliverableEmail(targetEmail)) {
       logSession({
         type: "email_skipped",
         tenantId: notification.tenantId,
         actorId: notification.userId,
         message: "Destinatario sin email real",
-        data: { notificationType: notification.type, email: user?.email ?? null }
+        data: { notificationType: notification.type, email: targetEmail ?? null }
       });
       continue;
     }
@@ -161,7 +172,7 @@ async function sendNotificationEmails(notifications: NotificationInput[]) {
         from: config.from,
         fromName: config.fromName,
         replyTo: config.replyTo,
-        to: user.email,
+        to: targetEmail,
         subject: `[MD Ops] ${notification.title}`,
         text: notificationEmailText(notification, user.name, context),
         html: notificationEmailHtml(notification, user.name, context)
@@ -171,7 +182,7 @@ async function sendNotificationEmails(notifications: NotificationInput[]) {
         tenantId: notification.tenantId,
         actorId: notification.userId,
         message: notification.title,
-        data: { notificationType: notification.type, to: user.email, entityId: notification.entityId ?? null }
+        data: { notificationType: notification.type, to: targetEmail, entityId: notification.entityId ?? null }
       });
     } catch (error) {
       logSession({
@@ -179,7 +190,7 @@ async function sendNotificationEmails(notifications: NotificationInput[]) {
         tenantId: notification.tenantId,
         actorId: notification.userId,
         message: notification.title,
-        data: { notificationType: notification.type, to: user.email, error: error instanceof Error ? error.message : String(error) }
+        data: { notificationType: notification.type, to: targetEmail, error: error instanceof Error ? error.message : String(error) }
       });
     }
   }

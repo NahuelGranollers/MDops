@@ -8,6 +8,7 @@ import { api, clearSession, streamUrl } from "@/lib/api";
 import { useSession } from "@/lib/use-session";
 import { UserAvatar } from "@/components/user-avatar";
 import { SessionErrorLogger } from "@/components/session-error-logger";
+import { EmailNotificationPopup } from "./email-notification-popup";
 
 const adminLinks = [
   ["/events", "Agenda", CalendarDays],
@@ -22,6 +23,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { user, loading, isAdmin } = useSession();
   const [unreadCount, setUnreadCount] = useState(0);
   const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [showEmailPopup, setShowEmailPopup] = useState(false);
   const links = adminLinks;
   const mobileLinks = links.filter(([href]) => href !== "/settings");
 
@@ -41,6 +43,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const nextTheme = savedTheme === "dark" || savedTheme === "light" ? savedTheme : "light";
     document.documentElement.classList.toggle("dark", nextTheme === "dark");
     setTheme(nextTheme);
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    if (user.notificationEmail) return;
+    const dismissed = window.localStorage.getItem(`md-ops-email-popup-dismissed:${user.id}`);
+    if (dismissed) return;
+    const timer = window.setTimeout(() => setShowEmailPopup(true), 1500);
+    return () => window.clearTimeout(timer);
   }, [user]);
 
   useEffect(() => {
@@ -124,6 +135,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </Link>
         ))}
       </nav>
+      {showEmailPopup && user && (
+        <EmailNotificationPopup user={user} onClose={() => setShowEmailPopup(false)} />
+      )}
     </div>
   );
 }

@@ -28,10 +28,11 @@ export async function authRoutes(app: FastifyInstance) {
 
   app.get("/auth/autologin", async () => getAutoLoginStatus());
 
-  app.post("/auth/autologin", async (_request, reply) => {
+  app.post("/auth/autologin", async (request, reply) => {
     const status = getAutoLoginStatus();
     if (!status.enabled) return reply.notFound("Autologin desactivado.");
-    return autoLogin();
+    const body = request.body as { identifier?: string };
+    return autoLogin(body?.identifier);
   });
 
   app.post("/auth/refresh", async (request) => {
@@ -62,6 +63,20 @@ export async function authRoutes(app: FastifyInstance) {
     await prisma.user.update({
       where: { id: request.user.id },
       data: { profileColor: input.profileColor }
+    });
+    return { user: await buildUserSession(request.user.id) };
+  });
+
+  app.put("/auth/notification-email", async (request, reply) => {
+    if (!request.user) return reply.unauthorized();
+    const body = request.body as { notificationEmail: string | null };
+    const value = body?.notificationEmail?.trim() || null;
+    if (value !== null && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+      return reply.badRequest("Email no válido.");
+    }
+    await prisma.user.update({
+      where: { id: request.user.id },
+      data: { notificationEmail: value }
     });
     return { user: await buildUserSession(request.user.id) };
   });

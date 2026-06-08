@@ -1,23 +1,16 @@
 {
   "version": 2,
-  "builds": [
+  "buildCommand": "pnpm build",
+  "outputDirectory": "apps/web/.next",
+  "framework": "nextjs",
+  "rewrites": [
     {
-      "src": "apps/web/package.json",
-      "use": "@vercel/next"
+      "source": "/api/:path*",
+      "destination": "/api/serverless"
     },
     {
-      "src": "apps/api/api/serverless.ts",
-      "use": "@vercel/node"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/apps/api/api/serverless.ts"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/apps/web/$1"
+      "source": "/uploads/:path*",
+      "destination": "/api/serverless"
     }
   ]
 }

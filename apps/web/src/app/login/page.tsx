@@ -16,20 +16,29 @@ export default function LoginPage() {
 
   useEffect(() => {
     let active = true;
-    let attemptedAutoLogin = false;
 
     async function runAutoLogin() {
       try {
-        const status = await api<{ enabled: boolean; identifier: string | null }>("/auth/autologin");
-        if (!active || !status.enabled) return;
-        attemptedAutoLogin = true;
+        const lastUser = window.localStorage.getItem("md-ops-last-user");
+        if (!lastUser) {
+          if (active) setAutoLoginLoading(false);
+          return;
+        }
+        const status = await api<{ enabled: boolean }>("/auth/autologin");
+        if (!active || !status.enabled) {
+          if (active) setAutoLoginLoading(false);
+          return;
+        }
         setAutoLoginActive(true);
-        const result = await api<{ accessToken: string; refreshToken: string }>("/auth/autologin", { method: "POST", body: JSON.stringify({}) });
+        const result = await api<{ accessToken: string; refreshToken: string }>("/auth/autologin", {
+          method: "POST",
+          body: JSON.stringify({ identifier: lastUser })
+        });
         if (!active) return;
         setSession(result.accessToken, result.refreshToken);
         router.replace("/dashboard");
       } catch {
-        if (active && attemptedAutoLogin) setError("No se ha podido entrar automáticamente. Puedes entrar manualmente.");
+        if (active) setError("");
       } finally {
         if (active) {
           setAutoLoginActive(false);
@@ -51,6 +60,7 @@ export default function LoginPage() {
     try {
       const result = await api<{ accessToken: string; refreshToken: string }>("/auth/login", { method: "POST", body: JSON.stringify({ identifier, password }) });
       setSession(result.accessToken, result.refreshToken);
+      window.localStorage.setItem("md-ops-last-user", identifier);
       router.replace("/dashboard");
     } catch {
       setError("No se ha podido entrar. Revisa usuario y password.");
