@@ -1,0 +1,18 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e4]:
+        - heading "MD Ops" [level=1] [ref=e5]
+        - paragraph [ref=e6]: Agenda operativa de bolos, equipo e indisponibilidad.
+      - generic [ref=e7]:
+        - text: Usuario
+        - textbox "Usuario" [ref=e8]: admin@md.local
+      - generic [ref=e9]:
+        - text: Password
+        - textbox "Password" [ref=e10]: Cambiar12345!
+      - button "Entrar" [ref=e11] [cursor=pointer]:
+        - img [ref=e12]
+        - text: Entrar
+  - button "Open Next.js Dev Tools" [ref=e20] [cursor=pointer]:
+    - img [ref=e21]
+  - alert [ref=e24]

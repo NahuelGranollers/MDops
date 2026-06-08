@@ -1,0 +1,3 @@
+ALTER TABLE "User"
+ADD COLUMN "profileColor" TEXT NOT NULL DEFAULT '#0f766e',
+ADD COLUMN "avatarUrl" TEXT;

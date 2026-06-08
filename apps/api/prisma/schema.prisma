@@ -1,0 +1,391 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum EventStatus {
+  pending
+  confirmed
+  cancelled
+  completed
+}
+
+enum AssignmentRole {
+  technician
+  assembler
+  driver
+  pickup_teardown
+  support
+  lead
+}
+
+enum AvailabilityStatus {
+  pending
+  approved
+  rejected
+  cancelled
+}
+
+enum ConfirmationStatus {
+  pending_read
+  read
+  confirmed
+}
+
+enum NotificationType {
+  assignment
+  schedule_change
+  availability_resolution
+  conflict
+  logistics_change
+  cancellation
+  comment
+}
+
+enum AuditAction {
+  create
+  update
+  delete
+  cancel
+  approve
+  reject
+  login
+  export
+}
+
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  timezone  String   @default("Europe/Madrid")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  users     User[]
+  events    Event[]
+  freelancers FreelanceContact[]
+  settings  Setting[]
+}
+
+model User {
+  id                  String                @id @default(uuid())
+  tenantId            String
+  email               String
+  name                String
+  phone               String?
+  profileColor        String                @default("#0f766e")
+  avatarUrl           String?
+  passwordHash        String
+  isActive            Boolean               @default(true)
+  deletedAt           DateTime?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  tenant              Tenant                @relation(fields: [tenantId], references: [id])
+  roles               UserRole[]
+  refreshTokens       RefreshToken[]
+  assignments         EventAssignment[]
+  availability        AvailabilityRequest[]
+  notifications       Notification[]
+  auditLogs           AuditLog[]            @relation("ActorAudit")
+  comments            Comment[]
+  readReceipts        ReadReceipt[]
+  attachments         Attachment[]
+
+  @@unique([tenantId, email])
+  @@index([tenantId, deletedAt])
+}
+
+model Role {
+  id          String           @id @default(uuid())
+  key         String           @unique
+  name        String
+  description String?
+  users       UserRole[]
+  permissions RolePermission[]
+}
+
+model Permission {
+  id          String           @id @default(uuid())
+  key         String           @unique
+  description String?
+  roles       RolePermission[]
+}
+
+model UserRole {
+  userId String
+  roleId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Place {
+  id              String   @id @default(uuid())
+  tenantId        String
+  provider        String
+  providerPlaceId String?
+  name            String
+  address         String
+  city            String?
+  latitude        Decimal? @db.Decimal(9, 6)
+  longitude       Decimal? @db.Decimal(9, 6)
+  type            String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId, type])
+}
+
+model Event {
+  id            String            @id @default(uuid())
+  tenantId      String
+  title         String
+  startsAt      DateTime
+  endsAt        DateTime
+  city          String
+  venueName     String
+  venueAddress  String?
+  venuePlaceId  String?
+  hotelName     String?
+  hotelAddress  String?
+  hotelPlaceId  String?
+  status        EventStatus       @default(pending)
+  visibleNotes  String?
+  internalNotes String?
+  gearNotes     String?
+  tags          String[]          @default([])
+  deletedAt     DateTime?
+  createdById   String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  tenant        Tenant            @relation(fields: [tenantId], references: [id])
+  logistics     Logistics?
+  segments      EventScheduleSegment[]
+  assignments   EventAssignment[]
+  comments      Comment[]
+  attachments   Attachment[]
+  conflictsA    ConflictLog[]     @relation("ConflictEventA")
+  conflictsB    ConflictLog[]     @relation("ConflictEventB")
+
+  @@index([tenantId, startsAt])
+  @@index([tenantId, status])
+  @@index([tenantId, deletedAt])
+}
+
+model EventScheduleSegment {
+  id          String            @id @default(uuid())
+  eventId     String
+  type        String
+  startsAt    DateTime
+  endsAt      DateTime
+  notes       String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  event       Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  assignments EventAssignment[]
+
+  @@index([eventId, type])
+  @@index([startsAt, endsAt])
+}
+
+model Logistics {
+  id             String   @id @default(uuid())
+  eventId        String   @unique
+  departureAt    DateTime?
+  arrivalAt      DateTime?
+  returnAt       DateTime?
+  contactName    String?
+  contactPhone   String?
+  venuePhone     String?
+  budgetCents    Int?
+  event          Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+}
+
+model EventAssignment {
+  id                 String             @id @default(uuid())
+  eventId            String
+  userId             String?
+  externalName       String?
+  externalPhone      String?
+  role               AssignmentRole
+  confirmationStatus ConfirmationStatus @default(pending_read)
+  personalNotes      String?
+  departureAt        DateTime?
+  arrivalAt          DateTime?
+  logisticsNotes     String?
+  segmentId          String?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  event              Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  segment            EventScheduleSegment? @relation(fields: [segmentId], references: [id], onDelete: SetNull)
+  user               User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  readReceipts       ReadReceipt[]
+
+  @@index([userId])
+  @@index([segmentId])
+  @@index([eventId, userId, role])
+}
+
+model FreelanceContact {
+  id        String   @id @default(uuid())
+  tenantId  String
+  name      String
+  phone     String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, name])
+}
+
+model AvailabilityRequest {
+  id                String                      @id @default(uuid())
+  tenantId          String
+  userId            String
+  startsAt          DateTime
+  endsAt            DateTime
+  reason            String?
+  status            AvailabilityStatus          @default(pending)
+  resolutionComment String?
+  resolvedById      String?
+  resolvedAt        DateTime?
+  createdAt         DateTime                    @default(now())
+  updatedAt         DateTime                    @updatedAt
+  user              User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  history           AvailabilityStatusHistory[]
+
+  @@index([tenantId, startsAt, endsAt])
+  @@index([userId, status])
+}
+
+model AvailabilityStatusHistory {
+  id                    String              @id @default(uuid())
+  availabilityRequestId String
+  fromStatus            AvailabilityStatus?
+  toStatus              AvailabilityStatus
+  comment               String?
+  actorId               String?
+  createdAt             DateTime            @default(now())
+  request               AvailabilityRequest @relation(fields: [availabilityRequestId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  tenantId  String
+  userId    String
+  type      NotificationType
+  title     String
+  body      String
+  entityId  String?
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, userId, readAt])
+}
+
+model AuditLog {
+  id        String      @id @default(uuid())
+  tenantId  String
+  actorId   String?
+  action    AuditAction
+  entity    String
+  entityId  String
+  before    Json?
+  after     Json?
+  ip        String?
+  userAgent String?
+  createdAt DateTime    @default(now())
+  actor     User?       @relation("ActorAudit", fields: [actorId], references: [id])
+
+  @@index([tenantId, entity, entityId])
+  @@index([tenantId, createdAt])
+}
+
+model Attachment {
+  id           String   @id @default(uuid())
+  tenantId     String
+  eventId      String?
+  uploadedById String
+  filename     String
+  kind         String?
+  mimeType     String
+  sizeBytes    Int
+  storagePath  String
+  createdAt    DateTime @default(now())
+  event        Event?   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  uploadedBy   User     @relation(fields: [uploadedById], references: [id])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  tenantId  String
+  eventId   String
+  authorId  String
+  body      String
+  internal  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  author    User     @relation(fields: [authorId], references: [id])
+}
+
+model ReadReceipt {
+  id           String          @id @default(uuid())
+  assignmentId String
+  userId       String
+  status       ConfirmationStatus
+  createdAt    DateTime        @default(now())
+  assignment   EventAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ConflictLog {
+  id            String   @id @default(uuid())
+  tenantId      String
+  userId        String
+  eventAId      String
+  eventBId      String
+  restMinutes   Int
+  requiredHours Int
+  resolvedAt    DateTime?
+  createdAt     DateTime @default(now())
+  eventA        Event    @relation("ConflictEventA", fields: [eventAId], references: [id], onDelete: Cascade)
+  eventB        Event    @relation("ConflictEventB", fields: [eventBId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, userId, resolvedAt])
+}
+
+model Setting {
+  id        String   @id @default(uuid())
+  tenantId  String
+  key       String
+  value     Json
+  updatedAt DateTime @updatedAt
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, key])
+}

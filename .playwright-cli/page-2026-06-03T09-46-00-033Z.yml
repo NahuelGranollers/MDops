@@ -1,0 +1,6 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - link "MD Ops" [ref=e4] [cursor=pointer]:
+      - /url: /events
+  - main [ref=e5]:
+    - generic "Cargando" [ref=e6]

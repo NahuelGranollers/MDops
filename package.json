@@ -1,0 +1,24 @@
+{
+  "name": "md-ops",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Plataforma self-hosted de gestion de bolos, disponibilidad y logistica para equipos tecnicos.",
+  "packageManager": "pnpm@9.15.4",
+  "scripts": {
+    "dev": "node scripts/run-with-env.mjs pnpm --parallel --filter @md-ops/api --filter @md-ops/web dev",
+    "build": "node scripts/run-with-env.mjs pnpm -r build",
+    "lint": "node scripts/run-with-env.mjs pnpm -r lint",
+    "test": "node scripts/run-with-env.mjs pnpm --filter @md-ops/api test",
+    "postinstall": "node scripts/run-with-env.mjs pnpm --filter @md-ops/api prisma generate",
+    "db:generate": "node scripts/run-with-env.mjs pnpm --filter @md-ops/api prisma generate",
+    "db:migrate": "node scripts/run-with-env.mjs pnpm --filter @md-ops/api prisma migrate deploy",
+    "db:dev": "node scripts/run-with-env.mjs pnpm --filter @md-ops/api prisma migrate dev",
+    "db:seed": "node scripts/run-with-env.mjs pnpm --filter @md-ops/api prisma db seed",
+    "docker:up": "docker compose up -d --build",
+    "docker:down": "docker compose down",
+    "portable:build": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-portable.ps1"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}

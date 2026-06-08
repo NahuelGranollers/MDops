@@ -1,0 +1,11 @@
+{
+  email admin@example.com
+}
+
+:80 {
+  handle_path /api/* {
+    reverse_proxy api:4000
+  }
+
+  reverse_proxy web:3000
+}
