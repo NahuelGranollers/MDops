@@ -1,3 +1,8 @@
 export default (req: any, res: any) => {
-  res.status(200).json({ ok: true, service: "api" });
+  const body = JSON.stringify({ ok: true, service: "api", timestamp: new Date().toISOString() });
+  res.writeHead(200, {
+    "Content-Type": "application/json",
+    "Content-Length": Buffer.byteLength(body),
+  });
+  res.end(body);
 };
