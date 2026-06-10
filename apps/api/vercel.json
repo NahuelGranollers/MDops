@@ -1,0 +1,20 @@
+{
+  "version": 2,
+  "buildCommand": "pnpm build",
+  "outputDirectory": "dist",
+  "env": {
+    "NODE_ENV": "production"
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/dist/$1"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/.*",
+      "dest": "/dist/index.js"
+    }
+  ]
+}
