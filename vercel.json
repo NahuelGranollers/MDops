@@ -14,13 +14,5 @@
   ],
   "env": {
     "NODE_ENV": "production"
-  },
-[
-    "apps/**",
-    "packages/**",
-    "docs/**",
-    "scripts/**",
-    "infra/**",
-    ".github/**"
-  ]
+  }
 }
