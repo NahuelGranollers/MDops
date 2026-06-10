@@ -1,4 +1,4 @@
-import { buildApp } from "../apps/api/src/server.js";
+import { buildApp } from "../apps/api/src/server.ts";
 
 const app = buildApp();
 

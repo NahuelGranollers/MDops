@@ -8,3 +8,6 @@ uploads
 .turbo
 .local-postgres
 dev-server.log
+
+.vercel
+.env*

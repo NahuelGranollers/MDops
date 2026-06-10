@@ -14,6 +14,12 @@ export type SessionUser = {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "/api";
 
+function apiOrigin() {
+  if (API_URL.startsWith("http")) return API_URL.replace(/\/api\/?$/, "");
+  if (typeof window !== "undefined") return window.location.origin;
+  return "";
+}
+
 export class ApiError extends Error {
   status: number;
   payload: any;
@@ -112,5 +118,6 @@ export function streamUrl() {
 export function assetUrl(path: string | null | undefined) {
   if (!path) return null;
   if (path.startsWith("http")) return path;
+  if (path.startsWith("/uploads/")) return `${apiOrigin()}${path}`;
   return path;
 }
