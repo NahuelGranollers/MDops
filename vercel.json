@@ -1,14 +1,11 @@
 {
   "version": 2,
-  "buildCommand": "pnpm --filter @md-ops/api build",
-  "rewrites": [
+  "buildCommand": "cd apps/api && npm install && npm run build",
+  "outputDirectory": "apps/api/dist",
+  "roots": [
     {
-      "source": "/uploads/:path*",
-      "destination": "/api/index?path=/uploads/:path*"
-    },
-    {
-      "source": "/health",
-      "destination": "/api/health"
+      "src": "apps/api",
+      "use": "@vercel/node"
     }
   ]
 }
