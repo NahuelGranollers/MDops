@@ -4,6 +4,10 @@ const app = buildApp();
 
 function normalizeUrl(req: any) {
   if (typeof req.url !== "string") return;
+  if (req.url.startsWith("/api/health")) {
+    req.url = req.url.replace(/^\/api\/health/, "/health");
+    return;
+  }
   if (req.url.startsWith("/api/uploads/")) {
     req.url = req.url.replace(/^\/api\/uploads/, "/uploads");
     return;

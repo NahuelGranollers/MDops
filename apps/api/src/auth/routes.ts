@@ -28,6 +28,14 @@ export async function authRoutes(app: FastifyInstance) {
 
   app.get("/auth/autologin", async () => getAutoLoginStatus());
 
+  app.get("/auth/bootstrap-status", async () => {
+    const [userCount, hasAdmin] = await Promise.all([
+      prisma.user.count({ where: { deletedAt: null } }),
+      prisma.user.findFirst({ where: { email: "admin@md.local", deletedAt: null, isActive: true }, select: { id: true } })
+    ]);
+    return { userCount, hasAdmin: Boolean(hasAdmin) };
+  });
+
   app.post("/auth/autologin", async (request, reply) => {
     const status = getAutoLoginStatus();
     if (!status.enabled) return reply.notFound("Autologin desactivado.");

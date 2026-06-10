@@ -127,6 +127,10 @@ echo == Listo ==
 echo Frontend: https://nahuelgranollers.github.io/MDops/
 echo API: https://m-dops-api.vercel.app
 echo.
+echo == Comprobacion rapida API ==
+powershell -NoProfile -ExecutionPolicy Bypass -Command "try { $r=Invoke-WebRequest -Uri 'https://m-dops-api.vercel.app/health' -UseBasicParsing -TimeoutSec 20; Write-Host ('Health: ' + $r.StatusCode + ' ' + $r.Content) } catch { Write-Host ('Health ERROR: ' + $_.Exception.Message) }"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "try { $r=Invoke-WebRequest -Uri 'https://m-dops-api.vercel.app/api/auth/bootstrap-status' -UseBasicParsing -TimeoutSec 20; Write-Host ('Bootstrap: ' + $r.StatusCode + ' ' + $r.Content) } catch { Write-Host ('Bootstrap ERROR: ' + $_.Exception.Message) }"
+echo.
 pause
 exit /b 0
 

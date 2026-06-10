@@ -3,12 +3,16 @@
   "buildCommand": "pnpm --filter @md-ops/api build",
   "rewrites": [
     {
+      "source": "/api/:path*",
+      "destination": "/api/index?path=/api/:path*"
+    },
+    {
       "source": "/uploads/:path*",
-      "destination": "/api/uploads/:path*"
+      "destination": "/api/index?path=/uploads/:path*"
     },
     {
       "source": "/health",
-      "destination": "/api/health"
+      "destination": "/api/index?path=/health"
     }
   ]
 }

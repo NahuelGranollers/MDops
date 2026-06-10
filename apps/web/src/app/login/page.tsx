@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LogIn } from "lucide-react";
-import { api, setSession } from "@/lib/api";
+import { ApiError, api, setSession } from "@/lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -62,8 +62,14 @@ export default function LoginPage() {
       setSession(result.accessToken, result.refreshToken);
       window.localStorage.setItem("md-ops-last-user", identifier);
       router.replace("/dashboard");
-    } catch {
-      setError("No se ha podido entrar. Revisa usuario y password.");
+    } catch (error) {
+      if (error instanceof ApiError) {
+        if (error.status === 404) setError("La API no esta respondiendo en la ruta de login.");
+        else if (error.status >= 500) setError("La API ha fallado. Revisa variables de Vercel y base de datos.");
+        else setError(error.message || "No se ha podido entrar. Revisa usuario y password.");
+      } else {
+        setError("No se puede conectar con la API. Revisa el despliegue de Vercel.");
+      }
     } finally {
       setLoading(false);
     }
