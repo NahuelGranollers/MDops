@@ -1,11 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "cd apps/api && npm install && npm run build",
-  "outputDirectory": "apps/api/dist",
-  "roots": [
-    {
-      "src": "apps/api",
-      "use": "@vercel/node"
-    }
-  ]
+  "packageManager": "pnpm@9",
+  "buildCommand": "pnpm install --frozen-lockfile && pnpm --filter @md-ops/api build",
+  "outputDirectory": "apps/api/dist"
 }
