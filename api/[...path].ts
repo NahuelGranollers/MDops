@@ -8,7 +8,7 @@ function normalizeUrl(req: any) {
     req.url = req.url.replace(/^\/api\/uploads/, "/uploads");
     return;
   }
-  if (!req.url.startsWith("/api/") && req.url !== "/health") {
+  if (!req.url.startsWith("/api/")) {
     req.url = `/api${req.url.startsWith("/") ? "" : "/"}${req.url}`;
   }
 }

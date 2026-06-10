@@ -1,29 +1,15 @@
 {
   "version": 2,
-  "buildCommand": "pnpm --filter @md-ops/api build && STATIC_EXPORT=true pnpm --filter @md-ops/web build",
+  "buildCommand": "pnpm --filter @md-ops/api build && NEXT_PUBLIC_API_URL=/api NEXT_PUBLIC_BASE_PATH= STATIC_EXPORT=true pnpm --filter @md-ops/web build",
   "outputDirectory": "apps/web/out",
-  "builds": [
-    {
-      "src": "apps/web/out/**/*",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "apps/api/dist/index.js", 
-      "use": "@vercel/node"
-    }
-  ],
   "rewrites": [
     {
-      "source": "/api/:path*",
-      "destination": "apps/api/dist/index.js"
-    },
-    {
       "source": "/uploads/:path*",
-      "destination": "apps/api/dist/index.js"
+      "destination": "/api/uploads/:path*"
     },
     {
-      "source": "/((?!api|uploads).*)" ,
-      "destination": "/$1"
+      "source": "/health",
+      "destination": "/api/health"
     }
   ]
 }

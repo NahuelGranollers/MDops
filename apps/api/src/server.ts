@@ -23,12 +23,24 @@ import { settingRoutes } from "./settings/routes.js";
 import { sessionLogRoutes } from "./session-log-routes.js";
 import { getSessionLogInfo, logSession } from "./session-log.js";
 
+function corsOrigins() {
+  return env.CORS_ORIGIN.split(",").map((origin) => {
+    const trimmed = origin.trim();
+    if (!trimmed) return trimmed;
+    try {
+      return new URL(trimmed).origin;
+    } catch {
+      return trimmed;
+    }
+  }).filter(Boolean);
+}
+
 export function buildApp() {
   const app = Fastify({ logger: true });
   const requestStarts = new WeakMap<object, number>();
   app.register(sensible);
   app.register(helmet);
-  app.register(cors, { origin: env.CORS_ORIGIN.split(","), credentials: true });
+  app.register(cors, { origin: corsOrigins(), credentials: true });
   app.register(rateLimit, { max: 120, timeWindow: "1 minute" });
   app.register(multipart, { limits: { fileSize: env.MAX_UPLOAD_MB * 1024 * 1024 } });
   const uploadRoot = path.resolve(env.UPLOAD_DIR);
