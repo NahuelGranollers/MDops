@@ -1,6 +1,5 @@
-import { handleOptions } from "./_cors.ts";
+import type { VercelRequest, VercelResponse } from "@vercel/node";
 
-export default function handler(req: any, res: any) {
-  if (handleOptions(req, res)) return;
-  res.status(200).json({ ok: true, service: "api", runtime: "vercel" });
+export default function handler(req: VercelRequest, res: VercelResponse) {
+  res.status(200).json({ ok: true, service: "api", runtime: "vercel", timestamp: new Date().toISOString() });
 }

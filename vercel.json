@@ -1,5 +1,3 @@
 {
-  "version": 2,
-  "buildCommand": "npm ci && npm --prefix packages/shared run build && npm --prefix apps/api run build",
-  "outputDirectory": "apps/api/dist"
+  "version": 2
 }

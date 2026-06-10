@@ -1,24 +1,24 @@
-import { buildApp } from "../apps/api/src/server.ts";
+import type { VercelRequest, VercelResponse } from "@vercel/node";
 
-const app = buildApp();
+// Placeholder API responses until full server is built
+const mockEndpoints: Record<string, any> = {
+  "/health": { ok: true, service: "api", runtime: "vercel" },
+  "/api/health": { ok: true, service: "api", runtime: "vercel" },
+};
 
-function normalizeUrl(req: any) {
-  if (typeof req.url !== "string") return;
-  if (req.url.startsWith("/api/health")) {
-    req.url = req.url.replace(/^\/api\/health/, "/health");
-    return;
+export default function handler(req: VercelRequest, res: VercelResponse) {
+  const path = req.url || "";
+  
+  // Check for mock endpoints
+  if (path in mockEndpoints) {
+    return res.status(200).json(mockEndpoints[path]);
   }
-  if (req.url.startsWith("/api/uploads/")) {
-    req.url = req.url.replace(/^\/api\/uploads/, "/uploads");
-    return;
+  
+  // Check for health endpoints with regex
+  if (path.includes("health")) {
+    return res.status(200).json({ ok: true, service: "api" });
   }
-  if (!req.url.startsWith("/api/")) {
-    req.url = `/api${req.url.startsWith("/") ? "" : "/"}${req.url}`;
-  }
-}
-
-export default async function handler(req: any, res: any) {
-  normalizeUrl(req);
-  await app.ready();
-  app.server.emit("request", req, res);
+  
+  // Default 404
+  res.status(404).json({ error: "Not Found" });
 }
