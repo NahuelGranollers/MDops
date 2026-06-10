@@ -1,6 +1,6 @@
 {
   "version": 2,
   "packageManager": "pnpm@9",
-  "buildCommand": "pnpm install --frozen-lockfile && pnpm --filter @md-ops/api build",
+  "buildCommand": "npm install && npm run build --workspace=@md-ops/api",
   "outputDirectory": "apps/api/dist"
 }
