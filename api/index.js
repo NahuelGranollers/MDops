@@ -1,3 +1,4 @@
 module.exports = (req, res) => {
-  res.status(200).send("OK");
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.end('API is running');
 };
