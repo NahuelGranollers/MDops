@@ -1,5 +1,19 @@
 {
   "version": 2,
-  "buildCommand": "",
-  "installCommand": ""
+  "builds": [
+    {
+      "src": "api.ts",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/health",
+      "dest": "/api"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/api"
+    }
+  ]
 }
