@@ -1,7 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "pnpm --filter @md-ops/api build && NEXT_PUBLIC_API_URL=/api NEXT_PUBLIC_BASE_PATH= STATIC_EXPORT=true pnpm --filter @md-ops/web build",
-  "outputDirectory": "apps/web/out",
+  "buildCommand": "pnpm --filter @md-ops/api build",
   "rewrites": [
     {
       "source": "/uploads/:path*",
