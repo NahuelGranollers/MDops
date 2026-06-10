@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "packageManager": "pnpm@9",
-  "buildCommand": "npm install && npm run build --workspace=@md-ops/api",
+  "buildCommand": "cd packages/shared && npm run build && cd ../../apps/api && npm run build",
   "outputDirectory": "apps/api/dist"
 }
