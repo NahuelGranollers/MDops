@@ -28,7 +28,7 @@ En GitHub, revisa:
 
 ## Vercel
 
-Configura estas variables en el proyecto Vercel:
+Configura estas variables en el proyecto Vercel. Para `DATABASE_URL`, usa la connection string `Transaction pooler`, puerto `6543`, porque Vercel es serverless e IPv4:
 
 ```env
 NODE_ENV=production
@@ -36,7 +36,7 @@ PUBLIC_APP_URL=https://nahuelgranollers.github.io/MDops
 CORS_ORIGIN=https://nahuelgranollers.github.io
 UPLOAD_DIR=/tmp
 
-DATABASE_URL=postgresql://postgres:[PASSWORD_REAL]@db.uvkkmqxnxpnnffxwevuw.supabase.co:5432/postgres
+DATABASE_URL=postgres://postgres.uvkkmqxnxpnnffxwevuw:[PASSWORD_REAL]@aws-[REGION].pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1&sslmode=require
 
 JWT_ACCESS_SECRET=[string_largo_aleatorio]
 JWT_REFRESH_SECRET=[otro_string_largo_aleatorio]
@@ -44,10 +44,10 @@ JWT_REFRESH_SECRET=[otro_string_largo_aleatorio]
 SUPABASE_URL=https://uvkkmqxnxpnnffxwevuw.supabase.co
 ```
 
-Recomendado para Vercel serverless: usa la connection string de Supabase `Transaction pooler`, puerto `6543`, y anade:
+Para migraciones locales con Prisma, usa la connection string `Session pooler`, puerto `5432`, porque la URL directa `db.uvkkmqxnxpnnffxwevuw.supabase.co:5432` puede requerir IPv6:
 
 ```txt
-?pgbouncer=true&connection_limit=1
+postgres://postgres.uvkkmqxnxpnnffxwevuw:[PASSWORD_REAL]@aws-[REGION].pooler.supabase.com:5432/postgres?sslmode=require
 ```
 
 Si configuras Supabase Storage para adjuntos, anade tambien:
