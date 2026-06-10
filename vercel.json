@@ -2,14 +2,28 @@
   "version": 2,
   "buildCommand": "pnpm --filter @md-ops/api build && STATIC_EXPORT=true pnpm --filter @md-ops/web build",
   "outputDirectory": "apps/web/out",
+  "builds": [
+    {
+      "src": "apps/web/out/**/*",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "apps/api/dist/index.js", 
+      "use": "@vercel/node"
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "/api/serverless"
+      "destination": "apps/api/dist/index.js"
     },
     {
       "source": "/uploads/:path*",
-      "destination": "/api/serverless"
+      "destination": "apps/api/dist/index.js"
+    },
+    {
+      "source": "/((?!api|uploads).*)" ,
+      "destination": "/$1"
     }
   ]
 }

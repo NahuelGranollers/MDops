@@ -16,7 +16,8 @@
     "db:seed": "node scripts/run-with-env.mjs pnpm --filter @md-ops/api prisma db seed",
     "docker:up": "docker compose up -d --build",
     "docker:down": "docker compose down",
-    "portable:build": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-portable.ps1"
+    "portable:build": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-portable.ps1",
+    "deploy:prod": "vercel --prod"
   },
   "devDependencies": {
     "typescript": "^5.8.3"
