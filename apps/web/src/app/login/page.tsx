@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LogIn } from "lucide-react";
 import { ApiError, api, setSession } from "@/lib/api";
@@ -32,13 +32,14 @@ export default function LoginPage() {
           return;
         }
         setAutoLoginActive(true);
-        const result = await api<{ accessToken: string; refreshToken: string }>("/auth/autologin", {
+        const result = await api<{ accessToken: string; refreshToken: string; user?: { roles: string[] } }>("/auth/autologin", {
           method: "POST",
           body: JSON.stringify({ identifier: lastUser })
         });
         if (!active) return;
         setSession(result.accessToken, result.refreshToken);
-        router.replace("/dashboard");
+        const isPissarra = result.user?.roles?.includes("pissarra");
+        router.replace(isPissarra ? "/planning" : "/dashboard");
       } catch {
         if (active) setError("");
       } finally {
@@ -55,15 +56,20 @@ export default function LoginPage() {
     };
   }, [router]);
 
+  const redirectAfterLogin = useCallback((result: { accessToken: string; refreshToken: string; user?: { roles: string[] } }) => {
+    setSession(result.accessToken, result.refreshToken);
+    const isPissarra = result.user?.roles?.includes("pissarra");
+    router.replace(isPissarra ? "/planning" : "/dashboard");
+  }, [router]);
+
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     setLoading(true);
     setError("");
     try {
-      const result = await api<{ accessToken: string; refreshToken: string }>("/auth/login", { method: "POST", body: JSON.stringify({ identifier, password }) });
-      setSession(result.accessToken, result.refreshToken);
+      const result = await api<{ accessToken: string; refreshToken: string; user?: { roles: string[] } }>("/auth/login", { method: "POST", body: JSON.stringify({ identifier, password }) });
       window.localStorage.setItem("md-ops-last-user", identifier);
-      router.replace("/dashboard");
+      redirectAfterLogin(result);
     } catch (error) {
       if (error instanceof ApiError) {
         if (error.status === 404) setError(t("login.error404"));

@@ -16,7 +16,8 @@ export const permissions = {
   availabilityManage: "availability:manage",
   settingsManage: "settings:manage",
   exportsRun: "exports:run",
-  auditRead: "audit:read"
+  auditRead: "audit:read",
+  planningView: "planning:view"
 } as const;
 
 export function requirePermission(permission: string) {

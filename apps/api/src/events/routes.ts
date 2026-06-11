@@ -419,6 +419,81 @@ export async function eventRoutes(app: FastifyInstance) {
     return reply.code(201).send(duplicated);
   });
 
+  app.get("/events/weekly-planning", async (request) => {
+    const tenantId = request.user!.tenantId;
+    const now = new Date();
+    const esOptions: Intl.DateTimeFormatOptions = { timeZone: "Europe/Madrid", year: "numeric", month: "2-digit", day: "2-digit", weekday: "long" };
+    const fmtDay = new Intl.DateTimeFormat("es", { timeZone: "Europe/Madrid", year: "numeric", month: "2-digit", day: "2-digit" });
+    const fmtWeekday = new Intl.DateTimeFormat("es", { timeZone: "Europe/Madrid", weekday: "long" });
+    const parts = fmtDay.formatToParts(now);
+    const todayStr = `${parts.find((p) => p.type === "year")!.value}-${parts.find((p) => p.type === "month")!.value}-${parts.find((p) => p.type === "day")!.value}`;
+    const today = new Date(todayStr + "T00:00:00+02:00");
+    const dayOfWeek = today.getUTCDay();
+    const daysUntilSunday = dayOfWeek === 0 ? 0 : 7 - dayOfWeek;
+    const weekEnd = new Date(today);
+    weekEnd.setUTCDate(weekEnd.getUTCDate() + daysUntilSunday);
+    const nextMonday = new Date(weekEnd);
+    nextMonday.setUTCDate(nextMonday.getUTCDate() + 1);
+    const nextSunday = new Date(nextMonday);
+    nextSunday.setUTCDate(nextSunday.getUTCDate() + 6);
+
+    const events = await prisma.event.findMany({
+      where: {
+        tenantId,
+        deletedAt: null,
+        status: { not: "cancelled" },
+        startsAt: { gte: today, lte: nextSunday }
+      },
+      include: {
+        assignments: {
+          include: { user: { select: { id: true, name: true, profileColor: true } } },
+          orderBy: { createdAt: "asc" }
+        },
+        segments: { orderBy: { startsAt: "asc" } }
+      },
+      orderBy: { startsAt: "asc" }
+    });
+
+    const dayNames = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+    const groups: Array<{ date: string; dayName: string; weekType: "current" | "next"; events: any[] }> = [];
+    const cursor = new Date(today);
+    while (cursor <= nextSunday) {
+      const dateStr = cursor.toISOString().slice(0, 10);
+      const dayName = dayNames[cursor.getUTCDay()]!;
+      const weekType = cursor <= weekEnd ? "current" : "next";
+      const dayEvents = events.filter((event) => {
+        const eDate = new Date(event.startsAt);
+        const eParts = fmtDay.formatToParts(eDate);
+        const eStr = `${eParts.find((p) => p.type === "year")!.value}-${eParts.find((p) => p.type === "month")!.value}-${eParts.find((p) => p.type === "day")!.value}`;
+        return eStr === dateStr;
+      });
+      groups.push({
+        date: dateStr,
+        dayName,
+        weekType,
+        events: dayEvents.map((event) => ({
+          id: event.id,
+          title: event.title,
+          venueName: event.venueName,
+          city: event.city,
+          status: event.status,
+          startsAt: event.startsAt,
+          endsAt: event.endsAt,
+          tags: event.tags,
+          segments: event.segments,
+          team: event.assignments.map((a) => ({
+            id: a.user?.id,
+            name: a.user?.name ?? a.externalName ?? "Freelance",
+            profileColor: a.user?.profileColor ?? "#888",
+            role: a.role
+          }))
+        }))
+      });
+      cursor.setUTCDate(cursor.getUTCDate() + 1);
+    }
+    return { days: groups };
+  });
+
   app.delete("/events/:id", async (request, reply) => {
     const { id } = request.params as { id: string };
     const tenantId = request.user!.tenantId;

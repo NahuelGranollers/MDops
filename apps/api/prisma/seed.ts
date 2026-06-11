@@ -12,7 +12,8 @@ const permissionKeys = [
   ["availability:manage", "Aprobar indisponibilidad"],
   ["settings:manage", "Editar configuracion"],
   ["exports:run", "Exportar datos"],
-  ["audit:read", "Ver auditoria"]
+  ["audit:read", "Ver auditoria"],
+  ["planning:view", "Ver planning semanal"]
 ] as const;
 
 async function findUserByEmails(tenantId: string, emails: string[]) {
@@ -92,6 +93,11 @@ async function main() {
     update: { name: "Apoyo", description: "Apoyo puntual" },
     create: { key: "support", name: "Apoyo", description: "Apoyo puntual" }
   });
+  const pissarra = await prisma.role.upsert({
+    where: { key: "pissarra" },
+    update: { name: "Pissarra", description: "Pantalla de planificación semanal" },
+    create: { key: "pissarra", name: "Pissarra", description: "Pantalla de planificación semanal" }
+  });
 
   const allPermissions = await prisma.permission.findMany();
   await prisma.rolePermission.deleteMany({ where: { roleId: admin.id } });
@@ -102,6 +108,11 @@ async function main() {
   for (const role of [assembler, driver, support]) {
     await prisma.rolePermission.deleteMany({ where: { roleId: role.id } });
     await prisma.rolePermission.createMany({ data: ownPermissions.map((permission) => ({ roleId: role.id, permissionId: permission.id })) });
+  }
+  const planningPerm = allPermissions.find((p) => p.key === "planning:view");
+  if (planningPerm) {
+    await prisma.rolePermission.deleteMany({ where: { roleId: pissarra.id } });
+    await prisma.rolePermission.createMany({ data: [{ roleId: pissarra.id, permissionId: planningPerm.id }] });
   }
 
   const passwordHash = await bcrypt.hash("2001", 12);
@@ -115,6 +126,7 @@ async function main() {
   const davidSancho = await ensureSeedUser({ tenantId: tenant.id, name: "David Sancho", email: "david@md.local", legacyEmails: ["david.s@md.local", "david.sancho@md.local"], profileColor: "#ea580c", passwordHash, roleId: assembler.id });
   const alex = await ensureSeedUser({ tenantId: tenant.id, name: "Àlex", email: "alex@md.local", profileColor: "#16a34a", passwordHash, roleId: driver.id });
   const xavi = await ensureSeedUser({ tenantId: tenant.id, name: "Xavi", email: "xavi@md.local", profileColor: "#9333ea", passwordHash, roleId: support.id });
+  await ensureSeedUser({ tenantId: tenant.id, name: "Pissarra", email: "pissarra@md.local", profileColor: "#0f766e", passwordHash, roleId: pissarra.id });
   await syncUserRoles(dani.id, [technician.id]);
   await syncUserRoles(nahuelUser.id, [technician.id]);
   await syncUserRoles(davidSancho.id, [assembler.id]);
@@ -161,7 +173,7 @@ async function main() {
     });
   }
 
-  console.log("Seed completado. Usuarios: admin, albert, lake/lago, ferran, nahuel, dani, david/sancho, alex, xavi. Password inicial para todos: 2001");
+  console.log("Seed completado. Usuarios: admin, albert, lake/lago, ferran, nahuel, dani, david/sancho, alex, xavi, pissarra. Password inicial para todos: 2001");
 }
 
 main().finally(async () => prisma.$disconnect());

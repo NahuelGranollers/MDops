@@ -25,7 +25,8 @@ const loginAliases: Record<string, string> = {
   sancho: "david@md.local",
   "david sancho": "david@md.local",
   "david s": "david@md.local",
-  davids: "david@md.local"
+  davids: "david@md.local",
+  pissarra: "pissarra@md.local"
 };
 
 function normalizeIdentifier(identifier: string) {
