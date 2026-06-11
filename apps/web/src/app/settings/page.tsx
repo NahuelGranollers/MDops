@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { KeyRound, Mail, UserPlus } from "lucide-react";
+import { KeyRound, Mail, Shield, ShieldOff, UserPlus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { api, clearSession } from "@/lib/api";
@@ -69,6 +69,15 @@ export default function SettingsPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
 
+  const [twoFAEnabled, setTwoFAEnabled] = useState(false);
+  const [twoFALoading, setTwoFALoading] = useState(false);
+  const [twoFASecret, setTwoFASecret] = useState("");
+  const [twoFAQrCode, setTwoFAQrCode] = useState("");
+  const [twoFAToken, setTwoFAToken] = useState("");
+  const [twoFARecoveryCodes, setTwoFARecoveryCodes] = useState<string[] | null>(null);
+  const [twoFADisablePassword, setTwoFADisablePassword] = useState("");
+  const [twoFARecoveryPassword, setTwoFARecoveryPassword] = useState("");
+
   const assignableRoles = useMemo(() => roles.map((role) => ({ key: role.key, name: roleLabel(role.key) })), [roles]);
 
   function flash(message: string) {
@@ -106,6 +115,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (!user) return;
+    load2FAStatus();
     if (!canManageSystem) {
       setLoading(false);
       return;
@@ -195,6 +205,78 @@ export default function SettingsPage() {
     flash(user.isActive ? "Usuario cancelado" : "Usuario restaurado");
   }
 
+  async function load2FAStatus() {
+    try {
+      const status = await api<{ enabled: boolean }>("/auth/2fa/status");
+      setTwoFAEnabled(status.enabled);
+    } catch {
+      setTwoFAEnabled(false);
+    }
+  }
+
+  async function setup2FA() {
+    setTwoFALoading(true);
+    try {
+      const result = await api<{ secret: string; qrCode: string }>("/auth/2fa/setup", { method: "POST" });
+      setTwoFASecret(result.secret);
+      setTwoFAQrCode(result.qrCode);
+      setTwoFAToken("");
+      setTwoFARecoveryCodes(null);
+    } catch (error) {
+      flash(error instanceof Error ? error.message : "Error al iniciar configuración 2FA.");
+    } finally {
+      setTwoFALoading(false);
+    }
+  }
+
+  async function enable2FA() {
+    if (!twoFASecret) return;
+    setTwoFALoading(true);
+    try {
+      const result = await api<{ recoveryCodes: string[] }>("/auth/2fa/enable", { method: "POST", body: JSON.stringify({ secret: twoFASecret, token: twoFAToken }) });
+      setTwoFAEnabled(true);
+      setTwoFARecoveryCodes(result.recoveryCodes);
+      flash("2FA activado correctamente.");
+    } catch (error) {
+      flash(error instanceof Error ? error.message : "Error al activar 2FA.");
+    } finally {
+      setTwoFALoading(false);
+    }
+  }
+
+  async function disable2FA() {
+    if (!twoFADisablePassword) return;
+    setTwoFALoading(true);
+    try {
+      await api("/auth/2fa/disable", { method: "POST", body: JSON.stringify({ password: twoFADisablePassword }) });
+      setTwoFAEnabled(false);
+      setTwoFASecret("");
+      setTwoFAQrCode("");
+      setTwoFAToken("");
+      setTwoFARecoveryCodes(null);
+      setTwoFADisablePassword("");
+      flash("2FA desactivado.");
+    } catch (error) {
+      flash(error instanceof Error ? error.message : "Error al desactivar 2FA.");
+    } finally {
+      setTwoFALoading(false);
+    }
+  }
+
+  async function regenerateRecoveryCodes() {
+    if (!twoFARecoveryPassword) return;
+    setTwoFALoading(true);
+    try {
+      const result = await api<{ recoveryCodes: string[] }>("/auth/2fa/recovery-codes", { method: "POST", body: JSON.stringify({ password: twoFARecoveryPassword }) });
+      setTwoFARecoveryCodes(result.recoveryCodes);
+      flash("Códigos de recuperación regenerados.");
+    } catch (error) {
+      flash(error instanceof Error ? error.message : "Error al regenerar códigos.");
+    } finally {
+      setTwoFALoading(false);
+    }
+  }
+
   async function deleteUser(user: UserRow) {
     if (!window.confirm(`¿Seguro que quieres eliminar a ${user.name}?`)) return;
     await api(`/users/${user.id}`, { method: "DELETE" });
@@ -248,6 +330,73 @@ export default function SettingsPage() {
             <button className="button" disabled={savingPassword}>{savingPassword ? <><span className="spinner" />Guardando</> : "Cambiar contraseña"}</button>
           </div>
         </form>
+
+        <section className="card grid">
+          <div className="between">
+            <div>
+              <h2>Autenticación en dos pasos (2FA)</h2>
+              <p className="muted">Añade una capa extra de seguridad con tu app de autenticación (Google Authenticator, Authy, etc.).</p>
+            </div>
+            <span className={`badge ${twoFAEnabled ? "approved" : "pending"}`}>{twoFAEnabled ? "Activo" : "Inactivo"}</span>
+          </div>
+
+          {!twoFAEnabled && !twoFASecret && (
+            <div className="sheet-actions">
+              <button className="button" onClick={setup2FA} disabled={twoFALoading}>
+                <Shield size={16} />{twoFALoading ? "Preparando..." : "Activar 2FA"}
+              </button>
+            </div>
+          )}
+
+          {twoFASecret && !twoFAEnabled && (
+            <div className="grid" style={{ gap: "1rem" }}>
+              <p className="muted">Escanea este código QR con tu app de autenticación o introduce la clave manualmente:</p>
+              {twoFAQrCode && <img src={twoFAQrCode} alt="QR Code 2FA" style={{ width: 180, height: 180, imageRendering: "pixelated" }} />}
+              <label className="field">Clave secreta
+                <input className="input" value={twoFASecret} readOnly onClick={(e) => (e.target as HTMLInputElement).select()} />
+              </label>
+              <label className="field">Código de verificación
+                <input className="input" value={twoFAToken} onChange={(e) => setTwoFAToken(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="000000" inputMode="numeric" autoFocus />
+              </label>
+              <div className="sheet-actions">
+                <button className="button" onClick={enable2FA} disabled={twoFALoading || twoFAToken.length !== 6}>
+                  {twoFALoading ? <><span className="spinner" />Verificando</> : "Confirmar y activar"}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {twoFARecoveryCodes && (
+            <div className="conflict-box" style={{ marginTop: "0.5rem" }}>
+              <strong>Guardá estos códigos de recuperación en un lugar seguro.</strong> Cada código solo puede usarse una vez.
+              <div style={{ fontFamily: "monospace", fontSize: "1.1rem", lineHeight: 2, marginTop: "0.5rem" }}>
+                {twoFARecoveryCodes.map((code, i) => <div key={i}>{code}</div>)}
+              </div>
+            </div>
+          )}
+
+          {twoFAEnabled && (
+            <div className="grid" style={{ gap: "0.75rem" }}>
+              <label className="field">Contraseña actual
+                <input className="input" type="password" value={twoFADisablePassword} onChange={(e) => setTwoFADisablePassword(e.target.value)} autoComplete="current-password" placeholder="Necesaria para desactivar 2FA" />
+              </label>
+              <div className="sheet-actions">
+                <button className="button secondary" onClick={disable2FA} disabled={twoFALoading || !twoFADisablePassword}>
+                  <ShieldOff size={16} />{twoFALoading ? "Desactivando..." : "Desactivar 2FA"}
+                </button>
+              </div>
+              <hr />
+              <label className="field">Contraseña para regenerar códigos
+                <input className="input" type="password" value={twoFARecoveryPassword} onChange={(e) => setTwoFARecoveryPassword(e.target.value)} autoComplete="off" placeholder="Confirmar contraseña" />
+              </label>
+              <div className="sheet-actions">
+                <button className="button secondary" onClick={regenerateRecoveryCodes} disabled={twoFALoading || !twoFARecoveryPassword}>
+                  Regenerar códigos de recuperación
+                </button>
+              </div>
+            </div>
+          )}
+        </section>
 
         {!canManageSystem && (
           <section className="card empty-state">

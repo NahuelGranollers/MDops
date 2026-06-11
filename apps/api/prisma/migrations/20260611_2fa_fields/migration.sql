@@ -1,0 +1,4 @@
+-- Add 2FA fields to User table
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "totpSecret" TEXT;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "totpEnabled" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "recoveryCodes" TEXT;

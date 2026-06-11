@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LogIn } from "lucide-react";
+import { LogIn, Shield } from "lucide-react";
 import { ApiError, api, setSession } from "@/lib/api";
 
 export default function LoginPage() {
@@ -14,25 +14,25 @@ export default function LoginPage() {
   const [autoLoginLoading, setAutoLoginLoading] = useState(true);
   const [autoLoginActive, setAutoLoginActive] = useState(false);
 
+  const [requires2FA, setRequires2FA] = useState(false);
+  const [tempToken, setTempToken] = useState("");
+  const [twoFACode, setTwoFACode] = useState("");
+  const [verifying2FA, setVerifying2FA] = useState(false);
+
   useEffect(() => {
     let active = true;
 
     async function runAutoLogin() {
       try {
-        const lastUser = window.localStorage.getItem("md-ops-last-user");
-        if (!lastUser) {
-          if (active) setAutoLoginLoading(false);
-          return;
-        }
-        const status = await api<{ enabled: boolean }>("/auth/autologin");
-        if (!active || !status.enabled) {
+        const rememberToken = window.localStorage.getItem("md-ops-remember-token");
+        if (!rememberToken) {
           if (active) setAutoLoginLoading(false);
           return;
         }
         setAutoLoginActive(true);
-        const result = await api<{ accessToken: string; refreshToken: string }>("/auth/autologin", {
+        const result = await api<{ accessToken: string; refreshToken: string }>("/auth/auto-login-remember", {
           method: "POST",
-          body: JSON.stringify({ identifier: lastUser })
+          body: JSON.stringify({ rememberToken })
         });
         if (!active) return;
         setSession(result.accessToken, result.refreshToken);
@@ -58,9 +58,19 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
     try {
-      const result = await api<{ accessToken: string; refreshToken: string }>("/auth/login", { method: "POST", body: JSON.stringify({ identifier, password }) });
+      const result = await api<{ accessToken: string; refreshToken: string; requires2FA?: boolean; tempToken?: string }>(
+        "/auth/login",
+        { method: "POST", body: JSON.stringify({ identifier, password }) }
+      );
+      if (result.requires2FA && result.tempToken) {
+        setTempToken(result.tempToken);
+        setRequires2FA(true);
+        setLoading(false);
+        return;
+      }
       setSession(result.accessToken, result.refreshToken);
-      window.localStorage.setItem("md-ops-last-user", identifier);
+      const rememberResult = await api<{ rememberToken: string }>("/auth/remember", { method: "POST" });
+      window.localStorage.setItem("md-ops-remember-token", rememberResult.rememberToken);
       router.replace("/dashboard");
     } catch (error) {
       if (error instanceof ApiError) {
@@ -71,8 +81,56 @@ export default function LoginPage() {
         setError("No se puede conectar con la API. Revisa el despliegue de Vercel.");
       }
     } finally {
-      setLoading(false);
+      if (!requires2FA) setLoading(false);
     }
+  }
+
+  async function submit2FA(event: React.FormEvent) {
+    event.preventDefault();
+    if (twoFACode.length !== 6) {
+      setError("El código debe tener 6 dígitos.");
+      return;
+    }
+    setVerifying2FA(true);
+    setError("");
+    try {
+      const result = await api<{ accessToken: string; refreshToken: string }>("/auth/2fa/complete", {
+        method: "POST",
+        body: JSON.stringify({ tempToken, token: twoFACode })
+      });
+      setSession(result.accessToken, result.refreshToken);
+      const rememberResult = await api<{ rememberToken: string }>("/auth/remember", { method: "POST" });
+      window.localStorage.setItem("md-ops-remember-token", rememberResult.rememberToken);
+      router.replace("/dashboard");
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setError(error.message || "Código incorrecto.");
+      } else {
+        setError("No se puede conectar con la API.");
+      }
+    } finally {
+      setVerifying2FA(false);
+    }
+  }
+
+  if (requires2FA) {
+    return (
+      <main className="login">
+        <form className="card grid" onSubmit={submit2FA}>
+          <div>
+            <h1>MD Ops</h1>
+            <p className="muted">Introduce el código de verificación de tu app de autenticación.</p>
+          </div>
+          <label className="field">Código 2FA
+            <input className="input" value={twoFACode} onChange={(e) => setTwoFACode(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="000000" autoComplete="one-time-code" inputMode="numeric" autoFocus required />
+          </label>
+          {error && <div className="badge rejected">{error}</div>}
+          <button className="button" disabled={verifying2FA || twoFACode.length !== 6}>
+            <Shield size={18} />{verifying2FA ? "Verificando..." : "Verificar"}
+          </button>
+        </form>
+      </main>
+    );
   }
 
   return (

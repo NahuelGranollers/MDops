@@ -27,13 +27,16 @@
     "fastify": "^5.3.2",
     "jsonwebtoken": "^9.0.2",
     "nanoid": "^5.1.5",
+    "otplib": "^13.4.1",
     "pino": "^9.6.0",
+    "qrcode": "^1.5.4",
     "xlsx": "^0.18.5",
     "zod": "^3.25.1"
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^22.15.3",
+    "@types/qrcode": "^1.5.6",
     "prisma": "^6.7.0",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3",

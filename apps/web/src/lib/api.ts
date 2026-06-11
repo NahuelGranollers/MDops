@@ -45,6 +45,7 @@ export function setSession(accessToken: string, refreshToken: string) {
 export function clearSession() {
   window.localStorage.removeItem("accessToken");
   window.localStorage.removeItem("refreshToken");
+  window.localStorage.removeItem("md-ops-remember-token");
 }
 
 function sendClientLog(entry: {

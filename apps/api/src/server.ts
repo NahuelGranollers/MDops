@@ -48,7 +48,7 @@ export function buildApp() {
   const requestStarts = new WeakMap<object, number>();
   app.register(sensible);
   app.register(helmet);
-  app.register(cors, { origin: corsOrigins(), credentials: true });
+  app.register(cors, { origin: corsOrigins(), credentials: true, methods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"] });
   app.register(rateLimit, { max: 120, timeWindow: "1 minute" });
   app.register(multipart, { limits: { fileSize: env.MAX_UPLOAD_MB * 1024 * 1024 } });
   const uploadRoot = path.resolve(env.UPLOAD_DIR);

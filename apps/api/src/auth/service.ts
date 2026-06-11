@@ -53,7 +53,7 @@ export async function buildUserSession(userId: string) {
   return { id: user.id, tenantId: user.tenantId, email: user.email, notificationEmail: user.notificationEmail, name: user.name, profileColor: user.profileColor, avatarUrl: user.avatarUrl, roles, permissions };
 }
 
-async function issueSession(userId: string) {
+export async function issueSession(userId: string) {
   const sessionUser = await buildUserSession(userId);
   const accessToken = jwt.sign(sessionUser, env.JWT_ACCESS_SECRET, { expiresIn: env.ACCESS_TOKEN_TTL as SignOptions["expiresIn"] });
   const refreshToken = randomBytes(48).toString("base64url");

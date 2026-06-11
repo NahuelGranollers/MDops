@@ -80,6 +80,9 @@ model User {
   profileColor        String                @default("#0f766e")
   avatarUrl           String?
   passwordHash        String
+  totpSecret          String?
+  totpEnabled         Boolean               @default(false)
+  recoveryCodes       String?
   isActive            Boolean               @default(true)
   deletedAt           DateTime?
   createdAt           DateTime              @default(now())
