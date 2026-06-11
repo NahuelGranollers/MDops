@@ -8,6 +8,7 @@ import { api, clearSession } from "@/lib/api";
 import { useSession } from "@/lib/use-session";
 import { useTranslation } from "@/lib/i18n/context";
 import { UserAvatar } from "@/components/user-avatar";
+import { SensitiveDataGate } from "@/components/sensitive-data-gate";
 
 type UserRow = {
   id: string;
@@ -315,7 +316,12 @@ export default function SettingsPage() {
                         <UserAvatar user={{ ...user, profileColor: draft.profileColor }} size="sm" />
                         <input className="input" value={draft.name} onChange={(event) => patchUser(user.id, { name: event.target.value })} />
                       </div>
-                      <input className="input" value={draft.email} onChange={(event) => patchUser(user.id, { email: event.target.value })} />
+                      <SensitiveDataGate>
+                        <input className="input" value={draft.email} onChange={(event) => patchUser(user.id, { email: event.target.value })} />
+                      </SensitiveDataGate>
+                      <SensitiveDataGate>
+                        <input className="input" value={draft.phone} onChange={(event) => patchUser(user.id, { phone: event.target.value })} placeholder={t("settings.phonePlaceholder")} />
+                      </SensitiveDataGate>
                       <input className="input color-input compact-color" type="color" value={draft.profileColor} onChange={(event) => patchUser(user.id, { profileColor: event.target.value })} aria-label={t("settings.colorAria", { name: user.name })} />
                       <div className="role-pills">
                         {assignableRoles.map((role) => <button type="button" className={draft.roleKeys.includes(role.key) ? "active" : ""} key={role.key} onClick={() => toggleUserRole(user.id, role.key)}>{role.name}</button>)}

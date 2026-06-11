@@ -129,6 +129,30 @@ export async function verify2FA(userId: string, token: string): Promise<boolean>
   return false;
 }
 
+export async function sensitiveVerify(userId: string, token: string) {
+  const user = await prisma.user.findUniqueOrThrow({
+    where: { id: userId },
+    select: { totpEnabled: true, totpSecret: true, recoveryCodes: true }
+  });
+  if (!user.totpEnabled) return { granted: true };
+  if (!user.totpSecret) throw new Error("2FA no está configurado.");
+  if (!/^\d{6}$/.test(token)) throw new Error("Código inválido.");
+  const valid = await verify({ token, secret: user.totpSecret });
+  if (valid) return { granted: true };
+  const codes: string[] = user.recoveryCodes ? JSON.parse(user.recoveryCodes) : [];
+  for (const hashed of codes) {
+    if (await bcrypt.compare(token, hashed)) {
+      const remaining = codes.filter((c) => c !== hashed);
+      await prisma.user.update({
+        where: { id: userId },
+        data: { recoveryCodes: remaining.length > 0 ? JSON.stringify(remaining) : null }
+      });
+      return { granted: true };
+    }
+  }
+  throw new Error("Código 2FA incorrecto.");
+}
+
 export async function regenerateRecoveryCodes(userId: string, password: string) {
   const user = await prisma.user.findUniqueOrThrow({
     where: { id: userId },

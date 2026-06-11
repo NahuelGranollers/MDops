@@ -34,8 +34,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    if (!loading && !user) router.replace("/login");
-  }, [loading, router, user]);
+    if (!loading && !user) {
+      router.replace("/login");
+      return;
+    }
+    if (user) {
+      const redirect = window.sessionStorage.getItem("md-ops-redirect");
+      if (redirect) {
+        window.sessionStorage.removeItem("md-ops-redirect");
+        const cleanPath = redirect.split("?")[0].replace(/\/+$/, "") + "/";
+        if (cleanPath !== pathname) router.replace(cleanPath);
+      }
+    }
+  }, [loading, router, user, pathname]);
 
   useEffect(() => {
     if (!user) return;

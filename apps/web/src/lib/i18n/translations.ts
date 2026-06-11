@@ -96,7 +96,8 @@ export const translations = {
       colorAria: "Color de {name}",
       smtpPending: "SMTP pendiente",
       securitySSL: "SSL/TLS",
-      securitySTARTTLS: "STARTTLS"
+      securitySTARTTLS: "STARTTLS",
+      phonePlaceholder: "Teléfono"
     },
     profile: {
       title: "Perfil",
@@ -365,7 +366,9 @@ export const translations = {
       success: "Éxito",
       loading: "Cargando",
       confirm: "Confirmar",
-      search: "Buscar"
+      search: "Buscar",
+      sensitiveView: "Mostrar",
+      sensitiveHidden: "Datos sensibles ocultos"
     },
     twoFA: {
       setupTitle: "Autenticación de dos factores",
@@ -383,7 +386,12 @@ export const translations = {
       recoveryDesc: "Guarda estos códigos en un lugar seguro. Cada código solo se puede usar una vez.",
       recoveryBtn: "Generar nuevos códigos",
       recoveryWarning: "Estos códigos no se volverán a mostrar.",
-      error: "Error de 2FA"
+      error: "Error de 2FA",
+      sensitiveTitle: "Verificación requerida",
+      sensitiveDesc: "Introduce tu código de autenticación de dos factores para ver datos sensibles.",
+      sensitiveVerify: "Verificar",
+      sensitiveGranted: "Acceso concedido",
+      sensitiveExpired: "Sesión expirada, verifica de nuevo"
     }
   },
   ca: {
@@ -483,7 +491,8 @@ export const translations = {
       colorAria: "Color de {name}",
       smtpPending: "SMTP pendent",
       securitySSL: "SSL/TLS",
-      securitySTARTTLS: "STARTTLS"
+      securitySTARTTLS: "STARTTLS",
+      phonePlaceholder: "Telèfon"
     },
     profile: {
       title: "Perfil",
@@ -752,7 +761,9 @@ export const translations = {
       success: "Èxit",
       loading: "Carregant",
       confirm: "Confirmar",
-      search: "Cercar"
+      search: "Cercar",
+      sensitiveView: "Mostra",
+      sensitiveHidden: "Dades sensibles ocultes"
     },
     twoFA: {
       setupTitle: "Autenticació de dos factors",
@@ -770,7 +781,12 @@ export const translations = {
       recoveryDesc: "Guarda aquests codis en un lloc segur. Cada codi només es pot usar una vegada.",
       recoveryBtn: "Generar nous codis",
       recoveryWarning: "Aquests codis no es tornaran a mostrar.",
-      error: "Error de 2FA"
+      error: "Error de 2FA",
+      sensitiveTitle: "Verificació requerida",
+      sensitiveDesc: "Introdueix el teu codi d'autenticació de dos factors per veure dades sensibles.",
+      sensitiveVerify: "Verificar",
+      sensitiveGranted: "Accés concedit",
+      sensitiveExpired: "Sessió expirada, verifica de nou"
     }
   }
 };

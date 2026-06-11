@@ -9,7 +9,7 @@ import path from "node:path";
 import { env } from "../config/env.js";
 import { autoLogin, buildUserSession, changePassword, getAutoLoginStatus, issueSession, login, refresh, revokeRefreshToken } from "./service.js";
 import { prisma } from "../db.js";
-import { setup2FA, enable2FA, disable2FA, verify2FA, get2FAStatus, regenerateRecoveryCodes } from "./two-factor.js";
+import { setup2FA, enable2FA, disable2FA, verify2FA, get2FAStatus, regenerateRecoveryCodes, sensitiveVerify } from "./two-factor.js";
 
 export async function authRoutes(app: FastifyInstance) {
   app.addHook("preHandler", async (request) => {
@@ -191,5 +191,20 @@ export async function authRoutes(app: FastifyInstance) {
     if (!request.user) return reply.unauthorized();
     const body = request.body as { password: string };
     return regenerateRecoveryCodes(request.user.id, body.password);
+  });
+
+  app.post("/auth/sensitive-verify", async (request, reply) => {
+    if (!request.user) return reply.unauthorized();
+    const body = request.body as { code: string };
+    const result = await sensitiveVerify(request.user.id, body.code);
+    if (!result.granted) {
+      return reply.code(403).send({ message: "Código 2FA incorrecto." });
+    }
+    const token = jwt.sign(
+      { userId: request.user.id, type: "sensitive_access" },
+      env.JWT_ACCESS_SECRET,
+      { expiresIn: "15m" }
+    );
+    return { token };
   });
 }
