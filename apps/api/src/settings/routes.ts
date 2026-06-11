@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import type { Setting } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "../db.js";
 import { requireSystemManager } from "../auth/rbac.js";
@@ -19,7 +20,7 @@ export async function settingRoutes(app: FastifyInstance) {
   app.get("/settings", async (request, reply) => {
     if (!request.user) return reply.unauthorized();
     const settings = await prisma.setting.findMany({ where: { tenantId: request.user.tenantId } });
-    return Object.fromEntries(settings.map((setting) => [setting.key, setting.value]));
+    return Object.fromEntries(settings.map((setting: Setting) => [setting.key, setting.value]));
   });
 
   app.put("/settings", { preHandler: requireSystemManager() }, async (request) => {

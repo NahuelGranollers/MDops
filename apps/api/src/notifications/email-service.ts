@@ -139,7 +139,7 @@ async function sendNotificationEmails(notifications: NotificationInput[]) {
     },
     select: { id: true, email: true, notificationEmail: true, name: true }
   });
-  const usersById = new Map(users.map((user) => [user.id, user]));
+  const usersById = new Map(users.map((user: Prisma.UserGetPayload<{ select: { id: true; email: true; notificationEmail: true; name: true } }>) => [user.id, user]));
   const contexts = await loadNotificationContexts(notifications);
 
   for (const notification of notifications) {
@@ -230,8 +230,8 @@ async function loadNotificationContexts(notifications: NotificationInput[]): Pro
   ]);
 
   return {
-    events: new Map(events.map((event) => [event.id, event])),
-    availability: new Map(availability.map((item) => [item.id, item]))
+    events: new Map(events.map((event: EventEmailDetails) => [event.id, event])),
+    availability: new Map(availability.map((item: AvailabilityEmailDetails) => [item.id, item]))
   };
 }
 
@@ -400,7 +400,7 @@ function availabilityDetailsHtml(item: AvailabilityEmailDetails) {
 
 function segmentsHtml(event: EventEmailDetails) {
   if (!event.segments.length) return "";
-  const items = event.segments.map((segment) => `
+  const items = event.segments.map((segment: Prisma.EventScheduleSegmentGetPayload<{}>) => `
     <div style="border:1px solid #dce3e8;border-radius:10px;padding:12px;margin-top:10px;background:#ffffff;">
       <div style="font-size:12px;font-weight:900;color:#0f766e;text-transform:uppercase;letter-spacing:.04em;">${escapeHtml(segmentLabel(segment.type))}</div>
       <div style="margin-top:4px;color:#142026;font-size:15px;font-weight:800;">${escapeHtml(formatDateTimeRange(segment.startsAt, segment.endsAt))}</div>
@@ -426,7 +426,7 @@ function logisticsHtml(event: EventEmailDetails) {
 
 function assignmentsHtml(event: EventEmailDetails) {
   if (!event.assignments.length) return "";
-  const items = event.assignments.map((assignment) => {
+  const items = event.assignments.map((assignment: Prisma.EventAssignmentGetPayload<{ include: { segment: true; user: { select: { name: true; email: true } } } }>) => {
     const name = assignment.user?.name ?? assignment.externalName ?? "Sin asignar";
     const parts = [
       roleLabel(assignment.role),

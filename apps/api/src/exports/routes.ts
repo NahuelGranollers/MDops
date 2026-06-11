@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import type { Prisma } from "@prisma/client";
 import { format } from "@fast-csv/format";
 import { prisma } from "../db.js";
 import { permissions, requirePermission } from "../auth/rbac.js";
@@ -22,7 +23,7 @@ export async function exportRoutes(app: FastifyInstance) {
         ciudad: event.city,
         local: event.venueName,
         estado: event.status,
-        asignados: event.assignments.map((a) => `${a.user?.name ?? a.externalName ?? "Freelance"}:${a.role}`).join(" | ")
+        asignados: event.assignments.map((a: Prisma.EventAssignmentGetPayload<{ include: { user: true } }>) => `${a.user?.name ?? a.externalName ?? "Freelance"}:${a.role}`).join(" | ")
       });
     }
     stream.end();

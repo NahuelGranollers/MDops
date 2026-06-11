@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import type { Prisma, Role, Permission } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { rolePermissionsSchema, userCreateSchema, userUpdateSchema } from "@md-ops/shared";
 import { prisma } from "../db.js";
@@ -48,7 +49,7 @@ export async function userRoutes(app: FastifyInstance) {
         phone: input.phone,
         profileColor: input.profileColor ?? "#0f766e",
         passwordHash: await bcrypt.hash(input.password, 12),
-        roles: { create: roles.map((role) => ({ roleId: role.id })) }
+        roles: { create: roles.map((role: Role) => ({ roleId: role.id })) }
       },
       select: { id: true, name: true, email: true, profileColor: true, avatarUrl: true }
     });
@@ -68,9 +69,9 @@ export async function userRoutes(app: FastifyInstance) {
     const roles = await prisma.role.findMany({ where: { key: { in: input.roleKeys } } });
     if (roles.length !== input.roleKeys.length) return reply.badRequest("Hay roles invalidos.");
 
-    const user = await prisma.$transaction(async (tx) => {
+    const user = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       await tx.userRole.deleteMany({ where: { userId: id } });
-      await tx.userRole.createMany({ data: roles.map((role) => ({ userId: id, roleId: role.id })) });
+      await tx.userRole.createMany({ data: roles.map((role: Role) => ({ userId: id, roleId: role.id })) });
       return tx.user.update({
         where: { id },
         data: {
@@ -140,10 +141,10 @@ export async function userRoutes(app: FastifyInstance) {
     const permissionRows = await prisma.permission.findMany({ where: { key: { in: requestedKeys } } });
     if (permissionRows.length !== requestedKeys.length) return reply.badRequest("Hay permisos invalidos.");
 
-    const updated = await prisma.$transaction(async (tx) => {
+    const updated = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       await tx.rolePermission.deleteMany({ where: { roleId: role.id } });
       if (permissionRows.length) {
-        await tx.rolePermission.createMany({ data: permissionRows.map((permission) => ({ roleId: role.id, permissionId: permission.id })) });
+        await tx.rolePermission.createMany({ data: permissionRows.map((permission: Permission) => ({ roleId: role.id, permissionId: permission.id })) });
       }
       return tx.role.findUniqueOrThrow({
         where: { id: role.id },

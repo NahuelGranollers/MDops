@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import type { Prisma, EventScheduleSegment, EventAssignment } from "@prisma/client";
 import { mkdir, stat } from "node:fs/promises";
 import { createWriteStream } from "node:fs";
 import { pipeline } from "node:stream/promises";
@@ -240,7 +241,7 @@ export async function eventRoutes(app: FastifyInstance) {
       return reply.code(409).send({ message: "No se cumple el descanso mínimo entre eventos.", conflicts: restConflicts });
     }
     const overlapConflicts = await assignmentOverlapConflicts(tenantId, input, segments);
-    const event = await prisma.$transaction(async (tx) => {
+    const event = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const created = await tx.event.create({
         data: {
           tenantId,
@@ -318,7 +319,7 @@ export async function eventRoutes(app: FastifyInstance) {
       return reply.code(409).send({ message: "No se cumple el descanso mínimo entre eventos.", conflicts: restConflicts });
     }
     const overlapConflicts = await assignmentOverlapConflicts(tenantId, input, segments, id);
-    const event = await prisma.$transaction(async (tx) => {
+    const event = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       await tx.event.update({ where: { id }, data: { deletedAt: new Date() } });
       const updated = await tx.event.create({
         data: {
@@ -398,7 +399,7 @@ export async function eventRoutes(app: FastifyInstance) {
         gearNotes: original.gearNotes,
         tags: original.tags,
         createdById: request.user!.id,
-        segments: { create: original.segments.map((s) => ({ type: s.type, startsAt: s.startsAt, endsAt: s.endsAt, notes: s.notes })) },
+        segments: { create: original.segments.map((s: EventScheduleSegment) => ({ type: s.type, startsAt: s.startsAt, endsAt: s.endsAt, notes: s.notes })) },
         logistics: original.logistics ? {
           create: {
             departureAt: original.logistics.departureAt,
@@ -410,7 +411,7 @@ export async function eventRoutes(app: FastifyInstance) {
             budgetCents: original.logistics.budgetCents
           }
         } : undefined,
-        assignments: { create: original.assignments.map((a) => ({ userId: a.userId, externalName: a.externalName, externalPhone: a.externalPhone, role: a.role, personalNotes: a.personalNotes, departureAt: a.departureAt, arrivalAt: a.arrivalAt, logisticsNotes: a.logisticsNotes })) }
+        assignments: { create: original.assignments.map((a: EventAssignment) => ({ userId: a.userId, externalName: a.externalName, externalPhone: a.externalPhone, role: a.role, personalNotes: a.personalNotes, departureAt: a.departureAt, arrivalAt: a.arrivalAt, logisticsNotes: a.logisticsNotes })) }
       }
     });
     await audit(request.user, "create", "event", duplicated.id, undefined, duplicated);

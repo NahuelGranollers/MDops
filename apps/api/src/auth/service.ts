@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import type { SignOptions } from "jsonwebtoken";
+import type { Prisma } from "@prisma/client";
 import { createHash, randomBytes } from "node:crypto";
 import { prisma } from "../db.js";
 import { env } from "../config/env.js";
@@ -47,8 +48,8 @@ export async function buildUserSession(userId: string) {
     where: { id: userId, deletedAt: null, isActive: true },
     include: { roles: { include: { role: { include: { permissions: { include: { permission: true } } } } } } }
   });
-  const roles = user.roles.map((item) => item.role.key);
-  const permissions = [...new Set(user.roles.flatMap((item) => item.role.permissions.map((rp) => rp.permission.key)))];
+  const roles = user.roles.map((item: { role: { key: string } }) => item.role.key);
+  const permissions = [...new Set(user.roles.flatMap((item: Prisma.UserRoleGetPayload<{ include: { role: { include: { permissions: { include: { permission: true } } } } } }>) => item.role.permissions.map((rp: { permission: { key: string } }) => rp.permission.key)))];
   return { id: user.id, tenantId: user.tenantId, email: user.email, notificationEmail: user.notificationEmail, name: user.name, profileColor: user.profileColor, avatarUrl: user.avatarUrl, roles, permissions };
 }
 

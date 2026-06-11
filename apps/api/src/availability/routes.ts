@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import type { User } from "@prisma/client";
 import { availabilityRequestSchema, availabilityResolutionSchema } from "@md-ops/shared";
 import { prisma } from "../db.js";
 import { permissions, requirePermission, isAdmin } from "../auth/rbac.js";
@@ -23,7 +24,7 @@ export async function availabilityRoutes(app: FastifyInstance) {
       }
     });
     if (admins.length > 0) {
-      await createNotifications(admins.map(admin => ({ tenantId, userId: admin.id, type: "availability_resolution", title, body, entityId })));
+      await createNotifications(admins.map((admin: User) => ({ tenantId, userId: admin.id, type: "availability_resolution", title, body, entityId })));
       publish({ tenantId, topic: "notifications", payload: { action: "created", multi: true } });
     }
   }
