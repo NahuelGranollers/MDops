@@ -22,6 +22,14 @@ import { realtimeRoutes } from "./realtime/routes.js";
 import { settingRoutes } from "./settings/routes.js";
 import { sessionLogRoutes } from "./session-log-routes.js";
 import { getSessionLogInfo, logSession } from "./session-log.js";
+import type { AuthUser } from "./types.js"; // Asegúrate de que la ruta a tus tipos sea correcta
+
+// Extensión global de tipos para que Fastify reconozca request.user sin errores
+declare module "fastify" {
+  interface FastifyRequest {
+    user?: AuthUser;
+  }
+}
 
 function corsOrigins() {
   return env.CORS_ORIGIN.split(",").map((origin) => {
@@ -55,7 +63,7 @@ export function buildApp() {
     const header = request.headers.authorization;
     if (!header?.startsWith("Bearer ")) return;
     try {
-      request.user = jwt.verify(header.slice(7), env.JWT_ACCESS_SECRET) as any;
+      request.user = jwt.verify(header.slice(7), env.JWT_ACCESS_SECRET) as AuthUser;
     } catch {
       request.user = undefined;
     }
@@ -100,7 +108,11 @@ export function buildApp() {
     return reply.status(typedError.statusCode ?? 500).send({ message: typedError.message || "Error interno." });
   });
 
+  // ─── ENDPOINTS DE VERIFICACIÓN DE PIPELINE (EVITAN ERRORES 404) ───
   app.get("/health", async () => ({ ok: true, service: "api" }));
+  app.get("/bootstrap", async () => ({ bootstrapped: true, message: "API cargada exitosamente" }));
+
+  // Rutas del Monorrepo
   app.register(authRoutes, { prefix: "/api" });
   app.register(eventRoutes, { prefix: "/api" });
   app.register(availabilityRoutes, { prefix: "/api" });
@@ -115,12 +127,25 @@ export function buildApp() {
   return app;
 }
 
+// Inicialización de la aplicación
+const appInstance = buildApp();
+
 if (process.env.NODE_ENV !== "test" && !process.env.VERCEL) {
-  const app = buildApp();
-  const address = await app.listen({ host: "0.0.0.0", port: env.API_PORT });
-  logSession({
-    type: "server_listen",
-    message: `API listening at ${address}`,
-    data: { address, logFile: getSessionLogInfo().logFile }
-  });
+  try {
+    const address = await appInstance.listen({ host: "0.0.0.0", port: env.API_PORT });
+    logSession({
+      type: "server_listen",
+      message: `API listening at ${address}`,
+      data: { address, logFile: getSessionLogInfo().logFile }
+    });
+  } catch (err) {
+    appInstance.log.error(err);
+    process.exit(1);
+  }
+}
+
+// Exportación requerida para que vercel.json empaquete las funciones Serverless de Fastify
+export default async function handler(req: any, reply: any) {
+  await appInstance.ready();
+  appInstance.server.emit("request", req, reply);
 }
