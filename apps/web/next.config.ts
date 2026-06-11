@@ -1,8 +1,6 @@
 import type { NextConfig } from "next";
 
-// Forzamos un tipado dinámico y seguro local para evadir bloqueos de tipos globales externos
 const env = process.env as Record<string, string | undefined>;
-
 const isStaticExport = env.STATIC_EXPORT === "true";
 const basePath = env.NEXT_PUBLIC_BASE_PATH || "";
 
@@ -12,6 +10,12 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
   },
+  // ─── DESACTIVAR CACHÉ DE WEBPACK PARA EVITAR EL BUG EISDIR EN WINDOWS ───
+  webpack: (config) => {
+    config.cache = false; // Fuerza a Webpack a compilar limpio en memoria RAM
+    return config;
+  },
+  // ────────────────────────────────────────────────────────────────────────
   async rewrites() {
     if (isStaticExport) return [];
     
