@@ -233,7 +233,8 @@ export async function eventRoutes(app: FastifyInstance) {
     const segments = normalizeSegments(input);
     const policy = await getRestPolicy(tenantId);
     const candidates = candidateAssignmentWindows(input, segments);
-    const windows: AssignmentWindow[] = candidates.map((c: any) => ({ userId: c.userId, startsAt: c.startsAt, endsAt: c.endsAt }));
+    const placeholderId = "new";
+    const windows: AssignmentWindow[] = candidates.map((c: any) => ({ eventId: placeholderId, title: input.title, userId: c.userId, startsAt: c.startsAt, endsAt: c.endsAt }));
     const restConflicts = detectRestConflicts(windows, policy.minRestHours);
     if (restConflicts.length > 0 && policy.restConflictMode === "block" && !input.forceConflicts) {
       return reply.code(409).send({ message: "No se cumple el descanso mínimo entre eventos.", conflicts: restConflicts });
@@ -311,7 +312,7 @@ export async function eventRoutes(app: FastifyInstance) {
     const segments = normalizeSegments(input);
     const policy = await getRestPolicy(tenantId);
     const candidates = candidateAssignmentWindows(input, segments);
-    const windows: AssignmentWindow[] = candidates.map((c: any) => ({ userId: c.userId, startsAt: c.startsAt, endsAt: c.endsAt }));
+    const windows: AssignmentWindow[] = candidates.map((c: any) => ({ eventId: id, title: input.title, userId: c.userId, startsAt: c.startsAt, endsAt: c.endsAt }));
     const restConflicts = detectRestConflicts(windows, policy.minRestHours);
     if (restConflicts.length > 0 && policy.restConflictMode === "block" && !input.forceConflicts) {
       return reply.code(409).send({ message: "No se cumple el descanso mínimo entre eventos.", conflicts: restConflicts });
