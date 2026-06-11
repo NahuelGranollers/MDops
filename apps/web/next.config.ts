@@ -15,16 +15,18 @@ const nextConfig: NextConfig = {
     config.cache = false; // Fuerza a Webpack a compilar limpio en memoria RAM
     return config;
   },
-  // ────────────────────────────────────────────────────────────────────────
-  async rewrites() {
-    if (isStaticExport) return [];
-    
-    const api = env.INTERNAL_API_URL ?? "http://127.0.0.1:4000";
-    return [
-      { source: "/api/:path*", destination: `${api}/api/:path*` },
-      { source: "/uploads/:path*", destination: `${api}/uploads/:path*` }
-    ];
-  }
+  
+  // ─── REWRITES CONDICIONALES PARA EVITAR ERRORES EN EXPORTACIONES ESTÁTICAS ───
+  // Solo se inyecta la función rewrites si NO es una exportación estática (GitHub Pages)
+  ...(!isStaticExport && {
+    async rewrites() {
+      const api = env.INTERNAL_API_URL ?? "http://127.0.0.1:4000";
+      return [
+        { source: "/api/:path*", destination: `${api}/api/:path*` },
+        { source: "/uploads/:path*", destination: `${api}/uploads/:path*` }
+      ];
+    }
+  })
 };
 
 export default nextConfig;
