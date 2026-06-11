@@ -22,8 +22,8 @@ type DayGroup = {
   events: PlanningEvent[];
 };
 
-const dayLabels = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
-const monthLabels = ["", "ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
+const dayLabels = ["dg", "dl", "dm", "dc", "dj", "dv", "ds"];
+const monthLabels = ["", "GEN", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SET", "OCT", "NOV", "DES"];
 const statusLabels: Record<string, string> = { pending: "Pte", confirmed: "Conf", completed: "Ok" };
 
 function formatTime(iso: string) {
@@ -85,6 +85,7 @@ export default function PlanningPage() {
         <span className="planning-legend">
           <span className="legend-dot current" />Aquesta setmana
           <span className="legend-dot next" />Setmana vinent
+          <span className="muted" style={{ fontSize: "0.85em", marginLeft: 8 }}>— 7 dies</span>
         </span>
       </header>
       <div className="planning-grid">

@@ -432,17 +432,15 @@ export async function eventRoutes(app: FastifyInstance) {
     const daysUntilSunday = dayOfWeek === 0 ? 0 : 7 - dayOfWeek;
     const weekEnd = new Date(today);
     weekEnd.setUTCDate(weekEnd.getUTCDate() + daysUntilSunday);
-    const nextMonday = new Date(weekEnd);
-    nextMonday.setUTCDate(nextMonday.getUTCDate() + 1);
-    const nextSunday = new Date(nextMonday);
-    nextSunday.setUTCDate(nextSunday.getUTCDate() + 6);
+    const lastDay = new Date(today);
+    lastDay.setUTCDate(lastDay.getUTCDate() + 6);
 
     const events = await prisma.event.findMany({
       where: {
         tenantId,
         deletedAt: null,
         status: { not: "cancelled" },
-        startsAt: { gte: today, lte: nextSunday }
+        startsAt: { gte: today, lte: lastDay }
       },
       include: {
         assignments: {
@@ -454,10 +452,10 @@ export async function eventRoutes(app: FastifyInstance) {
       orderBy: { startsAt: "asc" }
     });
 
-    const dayNames = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+    const dayNames = ["diumenge", "dilluns", "dimarts", "dimecres", "dijous", "divendres", "dissabte"];
     const groups: Array<{ date: string; dayName: string; weekType: "current" | "next"; events: any[] }> = [];
     const cursor = new Date(today);
-    while (cursor <= nextSunday) {
+    while (cursor <= lastDay) {
       const dateStr = cursor.toISOString().slice(0, 10);
       const dayName = dayNames[cursor.getUTCDay()]!;
       const weekType = cursor <= weekEnd ? "current" : "next";
