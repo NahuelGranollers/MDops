@@ -4,10 +4,12 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { api, streamUrl } from "@/lib/api";
+import { useTranslation } from "@/lib/i18n/context";
 import { Bell, CheckCircle2 } from "lucide-react";
 import { StatusBadge } from "@/components/status-badge";
 
 export default function NotificationsPage() {
+  const { t } = useTranslation();
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -25,7 +27,7 @@ export default function NotificationsPage() {
       }
     } catch (e) {
       setItems([]);
-      setError("No se han podido cargar los avisos");
+      setError(t("notifications.errorLoad"));
     } finally {
       setLoading(false);
     }
@@ -58,14 +60,14 @@ export default function NotificationsPage() {
       <div className="agenda-page">
         <section className="agenda-toolbar">
           <div>
-            <div className="eyebrow">Sistema</div>
-            <h1>Avisos</h1>
+            <div className="eyebrow">{t("notifications.system")}</div>
+            <h1>{t("notifications.title")}</h1>
           </div>
         </section>
 
         <section className="agenda-list">
           {error && <div className="inline-alert error">{error}</div>}
-          {loading && <div className="event-row skeleton-card" aria-label="Cargando avisos" />}
+          {loading && <div className="event-row skeleton-card" aria-label={t("notifications.loading")} />}
           {items.map((item) => (
             <Link key={item.id} href={hrefFor(item)} className={`event-row notification-row notification-link ${!item.readAt ? "is-new" : ""}`} onClick={() => api(`/notifications/${item.id}/read`, { method: "POST" }).catch(() => {})}>
               <div className={`date-pill notification-icon ${!item.readAt ? "unread" : ""}`}>
@@ -79,14 +81,14 @@ export default function NotificationsPage() {
                 <p className="notification-body">{item.body}</p>
                 <div className="muted notification-date">{new Date(item.createdAt).toLocaleString("es-ES")}</div>
               </div>
-              {!item.readAt && <span className="status-dot confirmed" title="Nueva" />}
+              {!item.readAt && <span className="status-dot confirmed" title={t("notifications.new")} />}
             </Link>
           ))}
           {!loading && items.length === 0 && !error && (
             <div className="empty-state">
               <CheckCircle2 size={32} className="muted" />
-              <strong>Todo al día.</strong>
-              <span>No tienes avisos pendientes por ahora.</span>
+              <strong>{t("notifications.allCaughtUp")}</strong>
+              <span>{t("notifications.allCaughtUpDesc")}</span>
             </div>
           )}
         </section>

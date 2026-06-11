@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { KeyRound, Mail, Shield, ShieldOff, UserPlus } from "lucide-react";
+import { KeyRound, Mail, UserPlus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { api, clearSession } from "@/lib/api";
 import { useSession } from "@/lib/use-session";
+import { useTranslation } from "@/lib/i18n/context";
 import { UserAvatar } from "@/components/user-avatar";
 
 type UserRow = {
@@ -36,14 +37,14 @@ function roleKeys(user: UserRow) {
   return user.roles.map((item) => item.role.key);
 }
 
-function roleLabel(key: string) {
+function roleLabel(key: string, t: (k: string) => string) {
   const labels: Record<string, string> = {
-    admin: "Admin",
-    technician: "Técnico",
-    assembler: "Montador",
-    driver: "Transporte",
-    support: "Apoyo",
-    lead: "Coordinador"
+    admin: t("roles.admin"),
+    technician: t("roles.technician"),
+    assembler: t("roles.assembler"),
+    driver: t("roles.driver"),
+    support: t("roles.support"),
+    lead: t("roles.coordinator")
   };
   return labels[key] ?? key;
 }
@@ -51,6 +52,7 @@ function roleLabel(key: string) {
 export default function SettingsPage() {
   const router = useRouter();
   const { user } = useSession();
+  const { t } = useTranslation();
   const canManageSystem = user?.email === "admin@md.local" || user?.email === "ferran@md.local";
   const [minRestHours, setMinRestHours] = useState(10);
   const [restConflictMode, setRestConflictMode] = useState("warn");
@@ -69,16 +71,7 @@ export default function SettingsPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
 
-  const [twoFAEnabled, setTwoFAEnabled] = useState(false);
-  const [twoFALoading, setTwoFALoading] = useState(false);
-  const [twoFASecret, setTwoFASecret] = useState("");
-  const [twoFAQrCode, setTwoFAQrCode] = useState("");
-  const [twoFAToken, setTwoFAToken] = useState("");
-  const [twoFARecoveryCodes, setTwoFARecoveryCodes] = useState<string[] | null>(null);
-  const [twoFADisablePassword, setTwoFADisablePassword] = useState("");
-  const [twoFARecoveryPassword, setTwoFARecoveryPassword] = useState("");
-
-  const assignableRoles = useMemo(() => roles.map((role) => ({ key: role.key, name: roleLabel(role.key) })), [roles]);
+  const assignableRoles = useMemo(() => roles.map((role) => ({ key: role.key, name: roleLabel(role.key, t) })), [roles, t]);
 
   function flash(message: string) {
     setSaved(message);
@@ -115,7 +108,6 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (!user) return;
-    load2FAStatus();
     if (!canManageSystem) {
       setLoading(false);
       return;
@@ -126,11 +118,11 @@ export default function SettingsPage() {
   async function changePassword(event: React.FormEvent) {
     event.preventDefault();
     if (newPassword !== confirmPassword) {
-      flash("Las contraseñas no coinciden");
+      flash(t("settings.passwordMismatch"));
       return;
     }
     if (newPassword.length < 4) {
-      flash("La nueva contraseña debe tener al menos 4 caracteres");
+      flash(t("settings.passwordTooShort"));
       return;
     }
     setSavingPassword(true);
@@ -142,13 +134,13 @@ export default function SettingsPage() {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      flash("Contraseña cambiada. Vuelve a entrar.");
+      flash(t("settings.passwordChanged"));
       window.setTimeout(() => {
         clearSession();
         router.replace("/login");
       }, 1000);
     } catch (error) {
-      flash(error instanceof Error ? error.message : "No se ha podido cambiar la contraseña");
+      flash(error instanceof Error ? error.message : t("settings.passwordError"));
     } finally {
       setSavingPassword(false);
     }
@@ -157,7 +149,7 @@ export default function SettingsPage() {
   async function saveSettings(event: React.FormEvent) {
     event.preventDefault();
     await api("/settings", { method: "PUT", body: JSON.stringify({ minRestHours, restConflictMode, timezone }) });
-    flash("Ajustes guardados");
+    flash(t("settings.savedSettings"));
   }
 
   async function sendEmailTest(event: React.FormEvent) {
@@ -166,9 +158,9 @@ export default function SettingsPage() {
     setSendingTestEmail(true);
     try {
       await api("/settings/email/test", { method: "POST", body: JSON.stringify({ to: testEmail.trim() }) });
-      flash("Correo de prueba enviado");
+      flash(t("settings.emailTestSent"));
     } catch (error) {
-      flash(error instanceof Error ? error.message : "No se ha podido enviar el correo");
+      flash(error instanceof Error ? error.message : t("settings.emailTestError"));
     } finally {
       setSendingTestEmail(false);
     }
@@ -189,99 +181,27 @@ export default function SettingsPage() {
     });
     setNewUser({ name: "", email: "", password: "2001", profileColor: "#0f766e", roleKeys: ["technician"] });
     await load();
-    flash("Usuario creado");
+    flash(t("settings.userCreated"));
   }
 
   async function saveUser(user: UserRow) {
     const draft = draftUsers[user.id];
     await api(`/users/${user.id}`, { method: "PUT", body: JSON.stringify({ ...draft, phone: draft.phone || null }) });
     await load();
-    flash("Usuario actualizado");
+    flash(t("settings.userUpdated"));
   }
 
   async function toggleUser(user: UserRow) {
     await api(`/users/${user.id}/${user.isActive ? "cancel" : "restore"}`, { method: "POST" });
     await load();
-    flash(user.isActive ? "Usuario cancelado" : "Usuario restaurado");
-  }
-
-  async function load2FAStatus() {
-    try {
-      const status = await api<{ enabled: boolean }>("/auth/2fa/status");
-      setTwoFAEnabled(status.enabled);
-    } catch {
-      setTwoFAEnabled(false);
-    }
-  }
-
-  async function setup2FA() {
-    setTwoFALoading(true);
-    try {
-      const result = await api<{ secret: string; qrCode: string }>("/auth/2fa/setup", { method: "POST" });
-      setTwoFASecret(result.secret);
-      setTwoFAQrCode(result.qrCode);
-      setTwoFAToken("");
-      setTwoFARecoveryCodes(null);
-    } catch (error) {
-      flash(error instanceof Error ? error.message : "Error al iniciar configuración 2FA.");
-    } finally {
-      setTwoFALoading(false);
-    }
-  }
-
-  async function enable2FA() {
-    if (!twoFASecret) return;
-    setTwoFALoading(true);
-    try {
-      const result = await api<{ recoveryCodes: string[] }>("/auth/2fa/enable", { method: "POST", body: JSON.stringify({ secret: twoFASecret, token: twoFAToken }) });
-      setTwoFAEnabled(true);
-      setTwoFARecoveryCodes(result.recoveryCodes);
-      flash("2FA activado correctamente.");
-    } catch (error) {
-      flash(error instanceof Error ? error.message : "Error al activar 2FA.");
-    } finally {
-      setTwoFALoading(false);
-    }
-  }
-
-  async function disable2FA() {
-    if (!twoFADisablePassword) return;
-    setTwoFALoading(true);
-    try {
-      await api("/auth/2fa/disable", { method: "POST", body: JSON.stringify({ password: twoFADisablePassword }) });
-      setTwoFAEnabled(false);
-      setTwoFASecret("");
-      setTwoFAQrCode("");
-      setTwoFAToken("");
-      setTwoFARecoveryCodes(null);
-      setTwoFADisablePassword("");
-      flash("2FA desactivado.");
-    } catch (error) {
-      flash(error instanceof Error ? error.message : "Error al desactivar 2FA.");
-    } finally {
-      setTwoFALoading(false);
-    }
-  }
-
-  async function regenerateRecoveryCodes() {
-    if (!twoFARecoveryPassword) return;
-    setTwoFALoading(true);
-    try {
-      const result = await api<{ recoveryCodes: string[] }>("/auth/2fa/recovery-codes", { method: "POST", body: JSON.stringify({ password: twoFARecoveryPassword }) });
-      setTwoFARecoveryCodes(result.recoveryCodes);
-      flash("Códigos de recuperación regenerados.");
-    } catch (error) {
-      flash(error instanceof Error ? error.message : "Error al regenerar códigos.");
-    } finally {
-      setTwoFALoading(false);
-    }
+    flash(user.isActive ? t("settings.userCancelled") : t("settings.userRestored"));
   }
 
   async function deleteUser(user: UserRow) {
-    if (!window.confirm(`¿Seguro que quieres eliminar a ${user.name}?`)) return;
+    if (!window.confirm(t("settings.deleteConfirm", { name: user.name }))) return;
     await api(`/users/${user.id}`, { method: "DELETE" });
     await load();
-    flash("Usuario eliminado");
+    flash(t("settings.userDeleted"));
   }
 
   function patchUser(id: string, update: Partial<(typeof draftUsers)[string]>) {
@@ -299,8 +219,8 @@ export default function SettingsPage() {
       <div className="agenda-page">
         <section className="agenda-toolbar">
           <div>
-            <div className="eyebrow">{canManageSystem ? "Solo admin y Ferran" : "Cuenta"}</div>
-            <h1>Ajustes</h1>
+            <div className="eyebrow">{canManageSystem ? t("settings.onlyAdminFerran") : t("settings.account")}</div>
+            <h1>{t("settings.title")}</h1>
           </div>
           <div className="row compact">
             {saved && <span className="badge approved">{saved}</span>}
@@ -310,98 +230,31 @@ export default function SettingsPage() {
         <form className="card grid profile-form" onSubmit={changePassword}>
           <div className="between">
             <div>
-              <h2>Cambiar contraseña</h2>
-              <p className="muted">Después tendrás que iniciar sesión de nuevo.</p>
+              <h2>{t("settings.changePassword")}</h2>
+              <p className="muted">{t("settings.changePasswordHint")}</p>
             </div>
             <KeyRound size={20} className="muted" />
           </div>
-          <label className="field">Contraseña actual
+          <label className="field">{t("settings.currentPassword")}
             <input className="input" type="password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} autoComplete="current-password" required />
           </label>
           <div className="quick-grid two">
-            <label className="field">Nueva contraseña
+            <label className="field">{t("settings.newPassword")}
               <input className="input" type="password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} autoComplete="new-password" required />
             </label>
-            <label className="field">Repetir contraseña
+            <label className="field">{t("settings.confirmPassword")}
               <input className="input" type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} autoComplete="new-password" required />
             </label>
           </div>
           <div className="sheet-actions">
-            <button className="button" disabled={savingPassword}>{savingPassword ? <><span className="spinner" />Guardando</> : "Cambiar contraseña"}</button>
+            <button className="button" disabled={savingPassword}>{savingPassword ? <><span className="spinner" />{t("settings.saving")}</> : t("settings.changePasswordBtn")}</button>
           </div>
         </form>
 
-        <section className="card grid">
-          <div className="between">
-            <div>
-              <h2>Autenticación en dos pasos (2FA)</h2>
-              <p className="muted">Añade una capa extra de seguridad con tu app de autenticación (Google Authenticator, Authy, etc.).</p>
-            </div>
-            <span className={`badge ${twoFAEnabled ? "approved" : "pending"}`}>{twoFAEnabled ? "Activo" : "Inactivo"}</span>
-          </div>
-
-          {!twoFAEnabled && !twoFASecret && (
-            <div className="sheet-actions">
-              <button className="button" onClick={setup2FA} disabled={twoFALoading}>
-                <Shield size={16} />{twoFALoading ? "Preparando..." : "Activar 2FA"}
-              </button>
-            </div>
-          )}
-
-          {twoFASecret && !twoFAEnabled && (
-            <div className="grid" style={{ gap: "1rem" }}>
-              <p className="muted">Escanea este código QR con tu app de autenticación o introduce la clave manualmente:</p>
-              {twoFAQrCode && <img src={twoFAQrCode} alt="QR Code 2FA" style={{ width: 180, height: 180, imageRendering: "pixelated" }} />}
-              <label className="field">Clave secreta
-                <input className="input" value={twoFASecret} readOnly onClick={(e) => (e.target as HTMLInputElement).select()} />
-              </label>
-              <label className="field">Código de verificación
-                <input className="input" value={twoFAToken} onChange={(e) => setTwoFAToken(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="000000" inputMode="numeric" autoFocus />
-              </label>
-              <div className="sheet-actions">
-                <button className="button" onClick={enable2FA} disabled={twoFALoading || twoFAToken.length !== 6}>
-                  {twoFALoading ? <><span className="spinner" />Verificando</> : "Confirmar y activar"}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {twoFARecoveryCodes && (
-            <div className="conflict-box" style={{ marginTop: "0.5rem" }}>
-              <strong>Guardá estos códigos de recuperación en un lugar seguro.</strong> Cada código solo puede usarse una vez.
-              <div style={{ fontFamily: "monospace", fontSize: "1.1rem", lineHeight: 2, marginTop: "0.5rem" }}>
-                {twoFARecoveryCodes.map((code, i) => <div key={i}>{code}</div>)}
-              </div>
-            </div>
-          )}
-
-          {twoFAEnabled && (
-            <div className="grid" style={{ gap: "0.75rem" }}>
-              <label className="field">Contraseña actual
-                <input className="input" type="password" value={twoFADisablePassword} onChange={(e) => setTwoFADisablePassword(e.target.value)} autoComplete="current-password" placeholder="Necesaria para desactivar 2FA" />
-              </label>
-              <div className="sheet-actions">
-                <button className="button secondary" onClick={disable2FA} disabled={twoFALoading || !twoFADisablePassword}>
-                  <ShieldOff size={16} />{twoFALoading ? "Desactivando..." : "Desactivar 2FA"}
-                </button>
-              </div>
-              <hr />
-              <label className="field">Contraseña para regenerar códigos
-                <input className="input" type="password" value={twoFARecoveryPassword} onChange={(e) => setTwoFARecoveryPassword(e.target.value)} autoComplete="off" placeholder="Confirmar contraseña" />
-              </label>
-              <div className="sheet-actions">
-                <button className="button secondary" onClick={regenerateRecoveryCodes} disabled={twoFALoading || !twoFARecoveryPassword}>
-                  Regenerar códigos de recuperación
-                </button>
-              </div>
-            </div>
-          )}
-        </section>
-
         {!canManageSystem && (
           <section className="card empty-state">
-            <h2>Todo listo</h2>
-            <p className="muted">Los ajustes operativos los gestionan admin y Ferran.</p>
+            <h2>{t("settings.allSet")}</h2>
+            <p className="muted">{t("settings.allSetDesc")}</p>
           </section>
         )}
 
@@ -410,46 +263,46 @@ export default function SettingsPage() {
         {loading ? <div className="card skeleton-card" /> : (
           <>
             <form className="card grid" onSubmit={saveSettings}>
-              <div className="between"><h2>Operativa</h2><button className="button">Guardar</button></div>
+              <div className="between"><h2>{t("settings.operations")}</h2><button className="button">{t("settings.save")}</button></div>
               <div className="quick-grid three">
-                <label className="field">Descanso mínimo<input className="input" type="number" min={1} max={24} value={minRestHours} onChange={(e) => setMinRestHours(Number(e.target.value))} /></label>
-                <label className="field">Conflictos<select className="select" value={restConflictMode} onChange={(e) => setRestConflictMode(e.target.value)}><option value="warn">Avisar</option><option value="block">Bloquear</option></select></label>
-                <label className="field">Zona horaria<input className="input" value={timezone} onChange={(e) => setTimezone(e.target.value)} /></label>
+                <label className="field">{t("settings.minRest")}<input className="input" type="number" min={1} max={24} value={minRestHours} onChange={(e) => setMinRestHours(Number(e.target.value))} /></label>
+                <label className="field">{t("settings.conflicts")}<select className="select" value={restConflictMode} onChange={(e) => setRestConflictMode(e.target.value)}><option value="warn">{t("settings.warn")}</option><option value="block">{t("settings.block")}</option></select></label>
+                <label className="field">{t("settings.timezone")}<input className="input" value={timezone} onChange={(e) => setTimezone(e.target.value)} /></label>
               </div>
             </form>
 
             <section className="card grid">
               <div className="between">
-                <h2>Correo</h2>
-                <span className={`badge ${emailStatus?.configured ? "approved" : "pending"}`}>{emailStatus?.configured ? "Listo" : "Sin configurar"}</span>
+                <h2>{t("settings.email")}</h2>
+                <span className={`badge ${emailStatus?.configured ? "approved" : "pending"}`}>{emailStatus?.configured ? t("settings.ready") : t("settings.notConfigured")}</span>
               </div>
               <div className="quick-grid three">
-                <label className="field">Servidor<input className="input" value={emailStatus?.host ? `${emailStatus.host}:${emailStatus.port}` : "SMTP pendiente"} readOnly /></label>
-                <label className="field">Remitente<input className="input" value={emailStatus?.from ?? ""} readOnly /></label>
-                <label className="field">Seguridad<input className="input" value={emailStatus?.secure ? "SSL/TLS" : "STARTTLS"} readOnly /></label>
+                <label className="field">{t("settings.server")}<input className="input" value={emailStatus?.host ? `${emailStatus.host}:${emailStatus.port}` : t("settings.smtpPending")} readOnly /></label>
+                <label className="field">{t("settings.sender")}<input className="input" value={emailStatus?.from ?? ""} readOnly /></label>
+                <label className="field">{t("settings.security")}<input className="input" value={emailStatus?.secure ? t("settings.securitySSL") : t("settings.securitySTARTTLS")} readOnly /></label>
               </div>
               {!emailStatus?.configured && (
-                <div className="conflict-box">Faltan {emailStatus?.missing.join(", ") || "datos SMTP"} en .env.</div>
+                <div className="conflict-box">{t("settings.missingSMTP", { vars: emailStatus?.missing.join(", ") || "SMTP" })}</div>
               )}
               <form className="management-row new-user-row" onSubmit={sendEmailTest}>
-                <input className="input" value={testEmail} onChange={(event) => setTestEmail(event.target.value)} placeholder="correo real para prueba" type="email" required />
+                <input className="input" value={testEmail} onChange={(event) => setTestEmail(event.target.value)} placeholder={t("settings.testEmailPlaceholder")} type="email" required />
                 <button className="button" disabled={!emailStatus?.configured || sendingTestEmail}>
-                  {sendingTestEmail ? <><span className="spinner" />Enviando</> : <><Mail size={16} />Enviar prueba</>}
+                  {sendingTestEmail ? <><span className="spinner" />{t("settings.sending")}</> : <><Mail size={16} />{t("settings.sendTest")}</>}
                 </button>
               </form>
             </section>
 
             <section className="card grid">
-              <div className="between"><h2>Equipo</h2><span className="muted">Roles de trabajo</span></div>
+              <div className="between"><h2>{t("settings.team")}</h2><span className="muted">{t("settings.roleLabels")}</span></div>
 
               <form className="management-row new-user-row" onSubmit={createUser}>
-                <input className="input" value={newUser.name} onChange={(event) => setNewUser((current) => ({ ...current, name: event.target.value }))} placeholder="Nombre" required />
-                <input className="input" value={newUser.email} onChange={(event) => setNewUser((current) => ({ ...current, email: event.target.value }))} placeholder="usuario@md.local" type="email" required />
-                <input className="input color-input compact-color" type="color" value={newUser.profileColor} onChange={(event) => setNewUser((current) => ({ ...current, profileColor: event.target.value }))} aria-label="Color de usuario" />
+                <input className="input" value={newUser.name} onChange={(event) => setNewUser((current) => ({ ...current, name: event.target.value }))} placeholder={t("settings.namePlaceholder")} required />
+                <input className="input" value={newUser.email} onChange={(event) => setNewUser((current) => ({ ...current, email: event.target.value }))} placeholder={t("settings.emailPlaceholder")} type="email" required />
+                <input className="input color-input compact-color" type="color" value={newUser.profileColor} onChange={(event) => setNewUser((current) => ({ ...current, profileColor: event.target.value }))} aria-label={t("settings.userColorAria")} />
                 <select className="select" value={newUser.roleKeys[0]} onChange={(event) => setNewUser((current) => ({ ...current, roleKeys: [event.target.value] }))}>
                   {assignableRoles.map((role) => <option key={role.key} value={role.key}>{role.name}</option>)}
                 </select>
-                <button className="button"><UserPlus size={16} />Crear</button>
+                <button className="button"><UserPlus size={16} />{t("settings.create")}</button>
               </form>
 
               <div className="management-list simple-management-list">
@@ -463,15 +316,15 @@ export default function SettingsPage() {
                         <input className="input" value={draft.name} onChange={(event) => patchUser(user.id, { name: event.target.value })} />
                       </div>
                       <input className="input" value={draft.email} onChange={(event) => patchUser(user.id, { email: event.target.value })} />
-                      <input className="input color-input compact-color" type="color" value={draft.profileColor} onChange={(event) => patchUser(user.id, { profileColor: event.target.value })} aria-label={`Color de ${user.name}`} />
+                      <input className="input color-input compact-color" type="color" value={draft.profileColor} onChange={(event) => patchUser(user.id, { profileColor: event.target.value })} aria-label={t("settings.colorAria", { name: user.name })} />
                       <div className="role-pills">
                         {assignableRoles.map((role) => <button type="button" className={draft.roleKeys.includes(role.key) ? "active" : ""} key={role.key} onClick={() => toggleUserRole(user.id, role.key)}>{role.name}</button>)}
                       </div>
                       <div className="row compact">
-                        <span className={`badge ${user.isActive ? "approved" : "cancelled"}`}>{user.isActive ? "Activo" : "Cancelado"}</span>
-                        <button className="button secondary" type="button" onClick={() => saveUser(user)}>Guardar</button>
-                        <button className="button secondary" type="button" onClick={() => toggleUser(user)}>{user.isActive ? "Cancelar" : "Restaurar"}</button>
-                        <button className="button subtle-danger" type="button" onClick={() => deleteUser(user)}>Eliminar</button>
+                        <span className={`badge ${user.isActive ? "approved" : "cancelled"}`}>{user.isActive ? t("settings.active") : t("settings.cancelled")}</span>
+                        <button className="button secondary" type="button" onClick={() => saveUser(user)}>{t("settings.saveUser")}</button>
+                        <button className="button secondary" type="button" onClick={() => toggleUser(user)}>{user.isActive ? t("settings.cancelUser") : t("settings.restoreUser")}</button>
+                        <button className="button subtle-danger" type="button" onClick={() => deleteUser(user)}>{t("settings.deleteUser")}</button>
                       </div>
                     </article>
                   );

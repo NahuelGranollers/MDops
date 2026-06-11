@@ -1,16 +1,17 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { I18nProvider } from "@/lib/i18n/context";
 
 export const metadata: Metadata = {
-  title: "MD Ops",
-  description: "Gestion de bolos, horarios e indisponibilidad"
+  title: "PISARRA MD",
+  description: "Gestió de bolos, horaris i indisponibilitat"
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es">
+    <html lang="ca">
       <body>
-        {children}
+        <I18nProvider>{children}</I18nProvider>
       </body>
     </html>
   );

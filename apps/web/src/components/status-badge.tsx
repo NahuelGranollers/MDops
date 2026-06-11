@@ -1,26 +1,9 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useTranslation } from "@/lib/i18n/context";
 
 type StatusTone = "neutral" | "success" | "warning" | "danger" | "info";
-
-const statusLabels: Record<string, string> = {
-  pending: "Pendiente",
-  confirmed: "Confirmado",
-  completed: "Completado",
-  cancelled: "Cancelado",
-  approved: "Aprobada",
-  rejected: "Rechazada",
-  pending_read: "Pendiente de leer",
-  read: "Leído",
-  assignment: "Asignación",
-  availability: "Indisponibilidad",
-  conflict: "Conflicto",
-  logistics: "Logística",
-  system: "Sistema",
-  user: "Usuario",
-  admin: "Admin"
-};
 
 const statusTones: Record<string, StatusTone> = {
   pending: "warning",
@@ -37,12 +20,31 @@ const statusTones: Record<string, StatusTone> = {
   logistics: "info"
 };
 
+const statusKeys: Record<string, string> = {
+  pending: "statusBadge.pending",
+  confirmed: "statusBadge.confirmed",
+  completed: "statusBadge.completed",
+  cancelled: "statusBadge.cancelled",
+  approved: "statusBadge.approved",
+  rejected: "statusBadge.rejected",
+  pending_read: "statusBadge.pendingRead",
+  read: "statusBadge.read",
+  assignment: "statusBadge.assignment",
+  availability: "statusBadge.availability",
+  conflict: "statusBadge.conflict",
+  logistics: "statusBadge.logistics",
+  system: "statusBadge.system",
+  user: "statusBadge.user",
+  admin: "statusBadge.admin"
+};
+
 export function statusLabel(value: string | null | undefined) {
-  if (!value) return "Sin estado";
-  return statusLabels[value] ?? value;
+  if (!value) return "statusBadge.noStatus";
+  return statusKeys[value] ?? value;
 }
 
 export function StatusBadge({ value, children, tone }: { value?: string | null; children?: ReactNode; tone?: StatusTone }) {
+  const { t } = useTranslation();
   const resolvedTone = tone ?? (value ? statusTones[value] : "neutral") ?? "neutral";
-  return <span className={`badge tone-${resolvedTone}`}>{children ?? statusLabel(value)}</span>;
+  return <span className={`badge tone-${resolvedTone}`}>{children ?? (value ? t(statusKeys[value] ?? value) : t("statusBadge.noStatus"))}</span>;
 }

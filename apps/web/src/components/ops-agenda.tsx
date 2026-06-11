@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight, Plus, Search } from "lucide-react";
 import { ApiError, api, streamUrl, trackClientEvent } from "@/lib/api";
 import { useSession } from "@/lib/use-session";
+import { useTranslation } from "@/lib/i18n/context";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { AdminCalendar, AgendaSkeleton, UserAgenda } from "@/components/agenda/agenda-calendar";
 import { EventDetailSheet } from "@/components/agenda/event-detail-sheet";
@@ -41,6 +42,7 @@ import {
 export function OpsAgenda() {
   const searchParams = useSearchParams();
   const { isAdmin } = useSession();
+  const { t } = useTranslation();
   const [events, setEvents] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [freelancers, setFreelancers] = useState<any[]>([]);
@@ -240,7 +242,7 @@ export function OpsAgenda() {
 
   function dismissQuickCreate() {
     setCreating(false);
-    if (hasDraftData(draft)) toast("info", "Borrador guardado");
+    if (hasDraftData(draft)) toast("info", t("events.draftSaved"));
   }
 
   function discardQuickCreate() {
@@ -480,7 +482,7 @@ export function OpsAgenda() {
       setDraft(defaultDraft(anchor));
       setEditingEventId(null);
       trackClientEvent("agenda_event_saved", { editing: Boolean(editingEventId), conflicts: returnedConflicts.length });
-      toast("success", "Bolo guardado");
+      toast("success", t("events.eventSaved"));
       if (returnedConflicts.length > 0) {
         setRestConflictDialog({ kind: "saved", conflicts: returnedConflicts });
       }
@@ -490,10 +492,10 @@ export function OpsAgenda() {
       if (error instanceof ApiError && error.status === 409 && Array.isArray(error.payload?.conflicts) && String(error.message).toLowerCase().includes("descanso")) {
         setConflicts(error.payload.conflicts);
         setRestConflictDialog({ kind: "blocked", conflicts: error.payload.conflicts });
-        toast("error", "No se cumple el descanso mínimo");
+        toast("error", t("events.noRestMinimum"));
         return;
       }
-      toast("error", error instanceof Error ? error.message : "No se ha podido guardar");
+      toast("error", error instanceof Error ? error.message : t("events.errorSave"));
     } finally {
       setSaving(false);
     }
@@ -508,13 +510,13 @@ export function OpsAgenda() {
   async function duplicateEvent(event: any) {
     try {
       trackClientEvent("agenda_duplicate_event", { eventId: event.id });
-      toast("info", "Duplicando bolo...");
+      toast("info", t("events.duplicating"));
       await api(`/events/${event.id}/duplicate`, { method: "POST" });
       setSelected(null);
-      toast("success", "Bolo duplicado");
+      toast("success", t("events.duplicated"));
       load();
     } catch {
-      toast("error", "No se ha podido duplicar");
+      toast("error", t("events.errorDuplicate"));
     }
   }
 
@@ -525,10 +527,10 @@ export function OpsAgenda() {
     setSelected(null);
     try {
       await api(`/events/${event.id}`, { method: "DELETE" });
-      toast("success", "Bolo cancelado");
+      toast("success", t("events.cancelled"));
       load();
     } catch {
-      toast("error", "No se ha podido cancelar");
+      toast("error", t("events.errorCancel"));
       load();
     } finally {
       setCanceling(false);
@@ -540,20 +542,20 @@ export function OpsAgenda() {
     <div className="agenda-page">
       <section className="agenda-toolbar" aria-label="Agenda">
         <div>
-            <div className="eyebrow">Agenda global</div>
-          <h1>{mode === "day" ? dateLabel(anchor) : mode === "week" ? "Semana operativa" : "Proximos bolos"}</h1>
+            <div className="eyebrow">{t("events.globalAgenda")}</div>
+          <h1>{mode === "day" ? dateLabel(anchor) : mode === "week" ? t("events.weekTitle") : t("events.upcomingTitle")}</h1>
         </div>
         <div className="toolbar-actions">
           <div className="date-stepper">
-            <button className="icon-button" onClick={() => setAnchor(addDays(anchor, mode === "day" ? -1 : -7))} aria-label="Anterior"><ChevronLeft size={18} /></button>
+            <button className="icon-button" onClick={() => setAnchor(addDays(anchor, mode === "day" ? -1 : -7))} aria-label={t("nav.previous")}><ChevronLeft size={18} /></button>
             <input className="date-input" type="date" value={toDateInput(anchor)} onClick={(e) => (e.currentTarget as any).showPicker?.()} onChange={(event) => setAnchor(new Date(`${event.target.value}T12:00:00`))} />
-            <button className="icon-button" onClick={() => setAnchor(addDays(anchor, mode === "day" ? 1 : 7))} aria-label="Siguiente"><ChevronRight size={18} /></button>
+            <button className="icon-button" onClick={() => setAnchor(addDays(anchor, mode === "day" ? 1 : 7))} aria-label={t("nav.next")}><ChevronRight size={18} /></button>
           </div>
-          <label className="search-box"><Search size={16} /><input id="quick-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar local o persona" /></label>
+          <label className="search-box"><Search size={16} /><input id="quick-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t("events.searchPlaceholder")} /></label>
           <div className="segmented">
-            {(["day", "week", "list"] as const).map((item) => <button key={item} className={mode === item ? "active" : ""} onClick={() => setMode(item)}>{item === "day" ? "Dia" : item === "week" ? "Semana" : "Lista"}</button>)}
+            {(["day", "week", "list"] as const).map((item) => <button key={item} className={mode === item ? "active" : ""} onClick={() => setMode(item)}>{item === "day" ? t("events.day") : item === "week" ? t("events.week") : t("events.list")}</button>)}
           </div>
-          {isAdmin && <button className="button primary-action" onClick={() => openCreate()}><Plus size={18} />{hasSavedDraft ? "Continuar borrador" : "Nuevo bolo"}</button>}
+          {isAdmin && <button className="button primary-action" onClick={() => openCreate()}><Plus size={18} />{hasSavedDraft ? t("events.continueDraft") : t("events.newEvent")}</button>}
         </div>
       </section>
 
@@ -565,13 +567,13 @@ export function OpsAgenda() {
         <UserAgenda events={calendarEvents} onSelect={setSelected} />
       )}
 
-      {creating && <QuickCreateSheet title={editingEventId ? "Editar bolo" : "Nuevo bolo"} draft={draft} setDraft={setDraft} users={suggestedUsers} freelancers={freelancers} signals={peopleSignals} minRestHours={minRestHours} onClose={dismissQuickCreate} onDiscard={discardQuickCreate} onSubmit={saveEvent} updateAssignment={updateAssignment} addSegmentAssignment={addSegmentAssignment} addFreelanceAssignment={addFreelanceAssignment} removeAssignment={removeAssignment} patchAssignment={patchAssignment} saving={saving} conflicts={conflicts} />}
+      {creating && <QuickCreateSheet title={editingEventId ? t("events.editEvent") : t("events.newEvent")} draft={draft} setDraft={setDraft} users={suggestedUsers} freelancers={freelancers} signals={peopleSignals} minRestHours={minRestHours} onClose={dismissQuickCreate} onDiscard={discardQuickCreate} onSubmit={saveEvent} updateAssignment={updateAssignment} addSegmentAssignment={addSegmentAssignment} addFreelanceAssignment={addFreelanceAssignment} removeAssignment={removeAssignment} patchAssignment={patchAssignment} saving={saving} conflicts={conflicts} />}
       {selected && <EventDetailSheet event={selected} onClose={() => setSelected(null)} onEdit={() => openEdit(selected)} onDuplicate={() => duplicateEvent(selected)} onCancel={() => setPendingCancel(selected)} onUploaded={load} isAdmin={isAdmin} />}
       <ConfirmDialog
         open={Boolean(pendingCancel)}
-        title="Cancelar bolo"
-        description={`Se ocultará "${pendingCancel?.venueName || pendingCancel?.title || "este bolo"}" de la agenda. Podrás conservar el historial interno.`}
-        confirmLabel="Cancelar bolo"
+        title={t("events.cancelDialogTitle")}
+        description={t("events.cancelDialogDesc", { name: pendingCancel?.venueName || pendingCancel?.title || "..." })}
+        confirmLabel={t("events.cancelDialogConfirm")}
         destructive
         loading={canceling}
         onClose={() => setPendingCancel(null)}
@@ -579,7 +581,7 @@ export function OpsAgenda() {
       />
       <RestConflictDialog
         open={Boolean(restConflictDialog)}
-        title={restConflictDialog?.kind === "blocked" ? "No se cumple el descanso mínimo" : "Bolo guardado con aviso de descanso"}
+        title={restConflictDialog?.kind === "blocked" ? t("events.noRestMinimum") : t("events.eventSaved")}
         description={restConflictDialog?.kind === "blocked" ? `Hay personas con menos de ${minRestHours} horas de descanso. Revisa la asignación o guarda igualmente si lo asumes.` : `Se ha guardado el bolo, pero hay personas con menos de ${minRestHours} horas de descanso mínimo.`}
         conflicts={restConflictDialog?.conflicts ?? []}
         loading={saving}

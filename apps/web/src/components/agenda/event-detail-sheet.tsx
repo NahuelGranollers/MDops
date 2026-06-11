@@ -2,6 +2,7 @@
 
 import { Clock, Copy, FileText, MapPin, Truck, Upload, UserRound, X } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "@/lib/i18n/context";
 import { api, assetUrl } from "@/lib/api";
 import { calculateOvertime } from "@/lib/overtime";
 import { StatusBadge } from "@/components/status-badge";
@@ -25,6 +26,7 @@ export function EventDetailSheet({
   onUploaded: () => void;
   isAdmin: boolean;
 }) {
+  const { t } = useTranslation();
   const [attachments, setAttachments] = useState<any[]>(event.attachments ?? []);
   const [uploading, setUploading] = useState(false);
 
@@ -47,24 +49,24 @@ export function EventDetailSheet({
       <aside className="sheet detail-sheet">
         <div className="sheet-head">
           <div><StatusBadge value={event.status} /><h2>{event.venueName || event.title}</h2></div>
-          <button className="icon-button" onClick={onClose} aria-label="Cerrar"><X size={18} /></button>
+          <button className="icon-button" onClick={onClose} aria-label={t("eventDetail.close")}><X size={18} /></button>
         </div>
         <section className="detail-summary">
           <div><Clock size={17} /><span>{dateLabel(event.startsAt)} - {timeLabel(event.startsAt)}-{timeLabel(event.endsAt)}</span></div>
           <div><MapPin size={17} /><span>{event.city}{event.venueAddress ? ` - ${event.venueAddress}` : ""}</span></div>
-          <div><UserRound size={17} /><span>{assignmentNames(event) || "Sin asignar"}</span></div>
+          <div><UserRound size={17} /><span>{assignmentNames(event) || t("eventDetail.unassigned")}</span></div>
         </section>
 
         {isAdmin && (
           <div className="detail-actions">
-            <button className="button" onClick={onEdit}>Editar bolo</button>
-            <button className="button secondary" onClick={onDuplicate}><Copy size={16} />Duplicar</button>
-            <button className="button subtle-danger" onClick={onCancel}>Cancelar bolo</button>
+            <button className="button" onClick={onEdit}>{t("eventDetail.editEvent")}</button>
+            <button className="button secondary" onClick={onDuplicate}><Copy size={16} />{t("eventDetail.duplicate")}</button>
+            <button className="button subtle-danger" onClick={onCancel}>{t("eventDetail.cancelEvent")}</button>
           </div>
         )}
 
         <details className="advanced-block" open>
-          <summary>Horarios</summary>
+          <summary>{t("eventDetail.schedules")}</summary>
           <div className="detail-list">
             {sortSegmentsByOpsOrder(event.segments?.length ? event.segments : [{ id: "main", type: "bolo", startsAt: event.startsAt, endsAt: event.endsAt }]).map((segment: any) => (
               <div className={`detail-line ${segmentClassName(segment.type)}`} key={segment.id ?? segment.type}>
@@ -77,22 +79,22 @@ export function EventDetailSheet({
         </details>
 
         <details className="advanced-block" open>
-          <summary>Notas y logística</summary>
+          <summary>{t("eventDetail.notesLogistics")}</summary>
           <div className="detail-notes">
-            {event.gearNotes && <p><strong>Qué hay que llevar:</strong> {event.gearNotes}</p>}
-            {event.hotelName && <p><strong>Hotel:</strong> {event.hotelName}</p>}
-            {event.visibleNotes && <p><strong>Notas:</strong> {event.visibleNotes}</p>}
-            {event.internalNotes && isAdmin && <p><strong>Interno:</strong> {event.internalNotes}</p>}
-            {!event.gearNotes && !event.hotelName && !event.visibleNotes && !event.internalNotes && <p className="muted">Sin detalles adicionales.</p>}
+            {event.gearNotes && <p><strong>{t("eventDetail.gear")}</strong> {event.gearNotes}</p>}
+            {event.hotelName && <p><strong>{t("eventDetail.hotel")}</strong> {event.hotelName}</p>}
+            {event.visibleNotes && <p><strong>{t("eventDetail.notes")}</strong> {event.visibleNotes}</p>}
+            {event.internalNotes && isAdmin && <p><strong>{t("eventDetail.internal")}</strong> {event.internalNotes}</p>}
+            {!event.gearNotes && !event.hotelName && !event.visibleNotes && !event.internalNotes && <p className="muted">{t("eventDetail.noDetails")}</p>}
           </div>
         </details>
 
         <details className="advanced-block" open>
-          <summary>PDFs</summary>
+          <summary>{t("eventDetail.pdfs")}</summary>
           <div className="attachment-list">
             {isAdmin && (
               <label className={`button secondary upload-button ${uploading ? "disabled" : ""}`}>
-                <Upload size={16} />{uploading ? "Subiendo" : "Subir albarán PDF"}
+                <Upload size={16} />{uploading ? t("eventDetail.uploading") : t("eventDetail.uploadPDF")}
                 <input type="file" accept="application/pdf" hidden disabled={uploading} onChange={(event) => uploadPdf(event.target.files?.[0] ?? null)} />
               </label>
             )}
@@ -102,12 +104,12 @@ export function EventDetailSheet({
                 <span>{attachment.filename}</span>
               </a>
             ))}
-            {attachments.length === 0 && <p className="muted">Sin PDFs adjuntos.</p>}
+            {attachments.length === 0 && <p className="muted">{t("eventDetail.noPDFs")}</p>}
           </div>
         </details>
 
         <details className="advanced-block">
-          <summary>Equipo</summary>
+          <summary>{t("eventDetail.team")}</summary>
           <div className="list compact-list">
             {[...(event.assignments ?? [])].sort((a: any, b: any) => {
               const aSegment = (a.segment?.type ?? "bolo") as SegmentType;

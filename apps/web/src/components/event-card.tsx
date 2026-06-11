@@ -1,6 +1,10 @@
+"use client";
+
 import { Calendar, MapPin, Users } from "lucide-react";
+import { useTranslation } from "@/lib/i18n/context";
 
 export function EventCard({ event, admin = false }: { event: any; admin?: boolean }) {
+  const { t } = useTranslation();
   const starts = new Date(event.startsAt);
   const ends = new Date(event.endsAt);
   return (
@@ -14,7 +18,7 @@ export function EventCard({ event, admin = false }: { event: any; admin?: boolea
       </div>
       <div className="row muted">
         <span className="row"><Calendar size={16} />{starts.toLocaleDateString("es-ES")} {starts.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}-{ends.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}</span>
-        {event.venueAddress && <a className="row" target="_blank" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.venueAddress)}`}><MapPin size={16} />Abrir mapa</a>}
+        {event.venueAddress && <a className="row" target="_blank" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.venueAddress)}`}><MapPin size={16} />{t("events.openMap") || "Abrir mapa"}</a>}
       </div>
       {event.visibleNotes && <p>{event.visibleNotes}</p>}
       <div className="row">

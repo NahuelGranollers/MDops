@@ -2,6 +2,7 @@
 
 import { Check, ChevronLeft, ChevronRight, MoreHorizontal, Plus, X } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useTranslation } from "@/lib/i18n/context";
 import { TimePicker } from "@/components/ui";
 import { calculateOvertime } from "@/lib/overtime";
 import { UserAvatar } from "@/components/user-avatar";
@@ -25,12 +26,15 @@ type PeopleSignal = { userId: string; unavailable: boolean; restConflict: boolea
 type FreelanceContact = { id: string; name: string; phone?: string | null };
 type Step = "horarios" | "equipo" | "detalles";
 
-const schedulePresets: { label: string; types: SegmentType[] }[] = [
-  { label: "Solo bolo", types: ["bolo"] },
-  { label: "Bolo + montaje", types: ["bolo", "montaje"] },
-  { label: "Bolo + desmontaje", types: ["bolo", "desmontaje"] },
-  { label: "Completo", types: ["bolo", "montaje", "prueba", "desmontaje"] }
-];
+function usePresets() {
+  const { t } = useTranslation();
+  return [
+    { label: t("quickEvent.presetSolo"), types: ["bolo" as SegmentType] },
+    { label: t("quickEvent.presetBoloMontaje"), types: ["bolo" as SegmentType, "montaje" as SegmentType] },
+    { label: t("quickEvent.presetBoloDesmontaje"), types: ["bolo" as SegmentType, "desmontaje" as SegmentType] },
+    { label: t("quickEvent.presetFull"), types: ["bolo" as SegmentType, "montaje" as SegmentType, "prueba" as SegmentType, "desmontaje" as SegmentType] }
+  ];
+}
 
 type QuickCreateSheetProps = {
   title: string;
@@ -71,6 +75,8 @@ export function QuickCreateSheet(props: QuickCreateSheetProps) {
     saving,
     conflicts
   } = props;
+  const { t } = useTranslation();
+  const schedulePresets = usePresets();
   const [step, setStep] = useState<Step>("horarios");
   const enabled = enabledSegments(draft);
   const active = activeSegment(draft);
@@ -165,12 +171,12 @@ export function QuickCreateSheet(props: QuickCreateSheetProps) {
     }}>
       <form className="sheet quick-sheet" onSubmit={onSubmit}>
         <div className="sheet-head">
-          <div><span className="eyebrow">Alta rápida</span><h2>{title}</h2></div>
-          <button type="button" className="icon-button" onClick={onClose} aria-label="Cerrar"><X size={18} /></button>
+          <div><span className="eyebrow">{t("quickEvent.quickCreate")}</span><h2>{title}</h2></div>
+          <button type="button" className="icon-button" onClick={onClose} aria-label={t("common.close")}><X size={18} /></button>
         </div>
 
-        <div className="quick-steps" aria-label="Pasos">
-          {(["Horarios", "Equipo", "Detalles"] as const).map((label, index) => (
+        <div className="quick-steps" aria-label={t("quickEvent.stepSchedule")}>
+          {([t("quickEvent.stepSchedule"), t("quickEvent.stepTeam"), t("quickEvent.stepDetails")] as const).map((label, index) => (
             <button key={label} type="button" className={stepIndex === index ? "active" : ""} onClick={() => setStep(index === 0 ? "horarios" : index === 1 ? "equipo" : "detalles")}>
               <span>{index + 1}</span>{label}
             </button>
@@ -180,10 +186,10 @@ export function QuickCreateSheet(props: QuickCreateSheetProps) {
         <div className="sheet-body scrollbar-hide">
           {step === "horarios" && (
             <div className="step-panel">
-              <label className="field">Local<input className="input large-input" value={draft.venueName} onChange={(event) => patch({ venueName: event.target.value, venueAddress: event.target.value ? `${event.target.value}, ${draft.city}` : "" })} placeholder="Sala, teatro, recinto..." required /></label>
+              <label className="field">{t("quickEvent.venue")}<input className="input large-input" value={draft.venueName} onChange={(event) => patch({ venueName: event.target.value, venueAddress: event.target.value ? `${event.target.value}, ${draft.city}` : "" })} placeholder={t("quickEvent.venuePlaceholder")} required /></label>
               <div className="quick-grid two">
-                <label className="field">Ciudad<input className="input" value={draft.city} onChange={(event) => patch({ city: event.target.value })} required /></label>
-                <label className="field">Dirección<input className="input" value={draft.venueAddress} onChange={(event) => patch({ venueAddress: event.target.value })} placeholder="Editable" /></label>
+                <label className="field">{t("quickEvent.city")}<input className="input" value={draft.city} onChange={(event) => patch({ city: event.target.value })} required /></label>
+                <label className="field">{t("quickEvent.address")}<input className="input" value={draft.venueAddress} onChange={(event) => patch({ venueAddress: event.target.value })} placeholder={t("quickEvent.addressPlaceholder")} /></label>
               </div>
               <ScheduleEditor draft={draft} activeType={activeType} patchSegment={patchSegment} setActiveSegmentType={setActiveSegmentType} applySchedulePreset={applySchedulePreset} />
             </div>
@@ -192,7 +198,7 @@ export function QuickCreateSheet(props: QuickCreateSheetProps) {
           {step === "equipo" && (
             <div className="step-panel">
               <section className="segment-picker">
-                <div className="between"><strong>Tramo activo</strong><span className="muted">{enabled.length} tramo(s)</span></div>
+                <div className="between"><strong>{t("quickEvent.activeSegment")}</strong><span className="muted">{enabled.length} {t("quickEvent.slots")}</span></div>
                 <div className="segmented wrap">
                   {sortSegmentsByOpsOrder(enabled).map((segment) => (
                     <button key={segment.type} type="button" className={`${activeType === segment.type ? "active" : ""} ${segmentClassName(segment.type)}`} onClick={() => setActiveSegmentType(segment.type)}>
@@ -214,7 +220,7 @@ export function QuickCreateSheet(props: QuickCreateSheetProps) {
               />
               {restWarningCount > 0 && (
                 <div className="conflict-box rest-inline-warning">
-                  {restWarningCount} persona(s) no llegan a {minRestHours} h de descanso. Al guardar se abrirá el aviso para revisarlo.
+                  {t("quickEvent.restWarning", { count: restWarningCount, hours: minRestHours })}
                 </div>
               )}
               {draft.assignments.length > 0 && (
@@ -237,29 +243,29 @@ export function QuickCreateSheet(props: QuickCreateSheetProps) {
             <div className="step-panel">
 
               <details className="advanced-block" open>
-                <summary><MoreHorizontal size={17} />Detalles del bolo</summary>
+                <summary><MoreHorizontal size={17} />{t("quickEvent.eventDetails")}</summary>
                 <div className="grid">
-                  <label className="field">Qué hay que llevar<textarea className="textarea" value={draft.gearNotes} onChange={(event) => patch({ gearNotes: event.target.value })} placeholder="Material, llaves, documentación..." /></label>
-                  <label className="field">Hotel<input className="input" value={draft.hotelName} onChange={(event) => patch({ hotelName: event.target.value })} /></label>
-                  <label className="field">Notas visibles<textarea className="textarea" value={draft.visibleNotes} onChange={(event) => patch({ visibleNotes: event.target.value })} /></label>
-                  <label className="field">Notas internas<textarea className="textarea" value={draft.internalNotes} onChange={(event) => patch({ internalNotes: event.target.value })} /></label>
-                  <label className="field">Etiquetas<input className="input" value={draft.tags} onChange={(event) => patch({ tags: event.target.value })} placeholder="audio, noche" /></label>
+                  <label className="field">{t("quickEvent.gearNotes")}<textarea className="textarea" value={draft.gearNotes} onChange={(event) => patch({ gearNotes: event.target.value })} placeholder={t("quickEvent.gearPlaceholder")} /></label>
+                  <label className="field">{t("quickEvent.hotel")}<input className="input" value={draft.hotelName} onChange={(event) => patch({ hotelName: event.target.value })} /></label>
+                  <label className="field">{t("quickEvent.visibleNotes")}<textarea className="textarea" value={draft.visibleNotes} onChange={(event) => patch({ visibleNotes: event.target.value })} /></label>
+                  <label className="field">{t("quickEvent.internalNotes")}<textarea className="textarea" value={draft.internalNotes} onChange={(event) => patch({ internalNotes: event.target.value })} /></label>
+                  <label className="field">{t("quickEvent.tags")}<input className="input" value={draft.tags} onChange={(event) => patch({ tags: event.target.value })} placeholder={t("quickEvent.tagsPlaceholder")} /></label>
                 </div>
               </details>
             </div>
           )}
 
-          {conflicts.length > 0 && <div className="conflict-box">Hay {conflicts.length} conflicto(s). Revisa la asignación antes de cerrar.</div>}
+          {conflicts.length > 0 && <div className="conflict-box">{t("quickEvent.conflictWarning", { count: conflicts.length })}</div>}
         </div>
 
         <div className="sheet-actions">
           <button type="button" className="button secondary" onClick={step === "horarios" ? onDiscard : () => setStep(step === "detalles" ? "equipo" : "horarios")}>
-            {step === "horarios" ? "Cancelar" : <><ChevronLeft size={16} />Atrás</>}
+            {step === "horarios" ? t("quickEvent.cancel") : <><ChevronLeft size={16} />{t("quickEvent.back")}</>}
           </button>
-          {step === "horarios" && <button type="button" className="button" disabled={!canContinueSchedule} onClick={() => setStep("equipo")}>Equipo<ChevronRight size={16} /></button>}
-          {step === "equipo" && <button type="button" className="button secondary" disabled={draft.assignments.length === 0} onClick={() => setStep("detalles")}>Detalles opcional<ChevronRight size={16} /></button>}
-          {step === "equipo" && <button className="button" disabled={saving || !canSave}>{saving ? <><span className="spinner" />Guardando</> : "Guardar bolo"}</button>}
-          {step === "detalles" && <button className="button" disabled={saving || !canSave}>{saving ? <><span className="spinner" />Guardando</> : "Guardar bolo"}</button>}
+          {step === "horarios" && <button type="button" className="button" disabled={!canContinueSchedule} onClick={() => setStep("equipo")}>{t("quickEvent.team")}<ChevronRight size={16} /></button>}
+          {step === "equipo" && <button type="button" className="button secondary" disabled={draft.assignments.length === 0} onClick={() => setStep("detalles")}>{t("quickEvent.detailsOptional")}<ChevronRight size={16} /></button>}
+          {step === "equipo" && <button className="button" disabled={saving || !canSave}>{saving ? <><span className="spinner" />{t("quickEvent.saving")}</> : t("quickEvent.saveEvent")}</button>}
+          {step === "detalles" && <button className="button" disabled={saving || !canSave}>{saving ? <><span className="spinner" />{t("quickEvent.saving")}</> : t("quickEvent.saveEvent")}</button>}
         </div>
       </form>
     </div>
@@ -311,11 +317,13 @@ function ScheduleEditor({
   setActiveSegmentType: (type: SegmentType) => void;
   applySchedulePreset: (types: SegmentType[]) => void;
 }) {
+  const { t } = useTranslation();
+  const schedulePresets = usePresets();
   const enabledTypes = new Set(draft.segments.filter((segment) => segment.enabled).map((segment) => segment.type));
 
   return (
     <section className="schedule-editor">
-      <div className="preset-strip" aria-label="Plantillas de horario">
+      <div className="preset-strip" aria-label={t("quickEvent.schedulePresets")}>
         {schedulePresets.map((preset) => {
           const active = preset.types.length === enabledTypes.size && preset.types.every((type) => enabledTypes.has(type));
           return (
@@ -339,14 +347,14 @@ function ScheduleEditor({
               <span>{segmentLabels[type]}</span>
             </label>
             <div className="quick-grid three">
-              <label className="field">Dia<input className="input picker-input" type="date" value={segment.date} onClick={(e) => (e.currentTarget as any).showPicker?.()} onChange={(event) => patchSegment(type, { date: event.target.value, enabled: true })} /></label>
-              <TimePicker label="Inicio" value={segment.start} onChange={(value) => patchSegment(type, { start: value, enabled: true })} />
-              <TimePicker label="Fin" value={segment.end} onChange={(value) => patchSegment(type, { end: value, enabled: true })} />
+              <label className="field">{t("quickEvent.segmentDay")}<input className="input picker-input" type="date" value={segment.date} onClick={(e) => (e.currentTarget as any).showPicker?.()} onChange={(event) => patchSegment(type, { date: event.target.value, enabled: true })} /></label>
+              <TimePicker label={t("quickEvent.segmentStart")} value={segment.start} onChange={(value) => patchSegment(type, { start: value, enabled: true })} />
+              <TimePicker label={t("quickEvent.segmentEnd")} value={segment.end} onChange={(value) => patchSegment(type, { end: value, enabled: true })} />
             </div>
             {segment.enabled && (
               <div className="schedule-row-footer">
-                <input className="input" value={segment.notes} onChange={(event) => patchSegment(type, { notes: event.target.value })} placeholder="Nota del tramo" />
-                <button type="button" className="button secondary" onClick={() => setActiveSegmentType(type)}>Asignar equipo</button>
+                <input className="input" value={segment.notes} onChange={(event) => patchSegment(type, { notes: event.target.value })} placeholder={t("quickEvent.segmentNote")} />
+                <button type="button" className="button secondary" onClick={() => setActiveSegmentType(type)}>{t("quickEvent.assignTeam")}</button>
               </div>
             )}
           </article>
@@ -357,10 +365,11 @@ function ScheduleEditor({
 }
 
 function AssignmentCoverage({ assignments, segments }: { assignments: AssignmentDraft[]; segments: ScheduleSegmentDraft[] }) {
+  const { t } = useTranslation();
   const enabled = sortSegmentsByOpsOrder(segments.filter((segment) => segment.enabled));
 
   return (
-    <section className="phase-coverage" aria-label="Cobertura de equipo">
+    <section className="phase-coverage" aria-label={t("quickEvent.coverageLabel")}>
       {enabled.map((segment) => {
         const count = assignments.filter((assignment) => (assignment.segmentType ?? "bolo") === segment.type).length;
         return (
@@ -392,6 +401,7 @@ function PeoplePicker({
   onToggle: (userId: string) => void;
   onAddFreelance: (name: string, phone: string, saveFreelance?: boolean) => void;
 }) {
+  const { t } = useTranslation();
   const [freelanceName, setFreelanceName] = useState("");
   const [freelancePhone, setFreelancePhone] = useState("");
   const activeAssignments = useMemo(
@@ -401,7 +411,7 @@ function PeoplePicker({
 
   function submitFreelance() {
     if (!freelanceName.trim()) return;
-    const saveRecurring = window.confirm("Quieres guardar este freelance para futuros bolos?");
+    const saveRecurring = window.confirm(t("quickEvent.saveFreelancePrompt"));
     onAddFreelance(freelanceName, freelancePhone, saveRecurring);
     setFreelanceName("");
     setFreelancePhone("");
@@ -409,7 +419,7 @@ function PeoplePicker({
 
   return (
     <section className="people-picker">
-      <div className="between"><strong>{activeSegmentType === "bolo" ? "Equipo principal del bolo" : `Equipo para ${segmentLabels[activeSegmentType]}`}</strong><span className="muted">{activeAssignments.length}</span></div>
+      <div className="between"><strong>{activeSegmentType === "bolo" ? t("quickEvent.mainTeam") : t("quickEvent.teamFor", { segment: segmentLabels[activeSegmentType] })}</strong><span className="muted">{activeAssignments.length}</span></div>
       <div className="people-grid">
         {users.map((user) => {
           const selected = activeAssignments.some((item) => item.userId === user.id);
@@ -420,9 +430,9 @@ function PeoplePicker({
               <button type="button" onClick={() => onToggle(user.id)} disabled={blocked}>
                 <span className="person-chip-name"><UserAvatar user={user} size="sm" />{user.name}</span>
                 <span className="person-chip-right">
-                  {signal?.unavailable && <span className="mini-dot danger" title="No disponible" />}
-                  {signal?.assignmentConflict && <span className="mini-dot danger" title="Ya tiene bolo en ese horario" />}
-                  {signal?.restConflict && <span className="mini-dot warning" title={`Descanso inferior a ${minRestHours} h`} />}
+                  {signal?.unavailable && <span className="mini-dot danger" title={t("quickEvent.notAvailable")} />}
+                  {signal?.assignmentConflict && <span className="mini-dot danger" title={t("quickEvent.busy")} />}
+                  {signal?.restConflict && <span className="mini-dot warning" title={t("quickEvent.restLess", { hours: minRestHours })} />}
                   {selected && <Check size={15} />}
                 </span>
               </button>
@@ -440,9 +450,9 @@ function PeoplePicker({
         </div>
       )}
       <div className="freelance-row">
-        <input className="input" value={freelanceName} onChange={(event) => setFreelanceName(event.target.value)} placeholder="Freelance" />
-        <input className="input" value={freelancePhone} onChange={(event) => setFreelancePhone(event.target.value)} placeholder="Contacto" />
-        <button className="button secondary" type="button" onClick={submitFreelance} disabled={!freelanceName.trim()}><Plus size={15} />Añadir</button>
+        <input className="input" value={freelanceName} onChange={(event) => setFreelanceName(event.target.value)} placeholder={t("quickEvent.freelance")} />
+        <input className="input" value={freelancePhone} onChange={(event) => setFreelancePhone(event.target.value)} placeholder={t("quickEvent.contact")} />
+        <button className="button secondary" type="button" onClick={submitFreelance} disabled={!freelanceName.trim()}><Plus size={15} />{t("quickEvent.add")}</button>
       </div>
     </section>
   );
@@ -469,11 +479,12 @@ function AssignmentLogisticsList({
   patchAssignment: (id: string, update: Partial<AssignmentDraft>) => void;
   patchAssignmentSegment: (id: string, type: SegmentType) => void;
 }) {
+  const { t } = useTranslation();
   const groupedKeys = Array.from(new Set(assignments.map((assignment) => assignment.userId ? `user:${assignment.userId}` : `freelance:${assignment.id}`)));
 
   return (
     <section className="assigned-team">
-      <div className="between"><strong>Tareas asignadas</strong><span className="muted">{assignments.length}</span></div>
+      <div className="between"><strong>{t("quickEvent.assignedTasks")}</strong><span className="muted">{assignments.length}</span></div>
       <div className="assigned-list">
         {groupedKeys.map((key) => {
           const userId = key.startsWith("user:") ? key.slice(5) : null;
@@ -492,9 +503,9 @@ function AssignmentLogisticsList({
               <div className="assigned-person-head">
                 <strong className="assigned-person-name"><UserAvatar user={user ?? { name: displayName }} size="sm" />{displayName}</strong>
                 <div className="row compact">
-                  {signal?.unavailable && <span className="badge rejected">No disponible</span>}
-                  {signal?.assignmentConflict && <span className="badge rejected">Ocupado</span>}
-                  {signal?.restConflict && <span className="badge pending">Descanso &lt; {minRestHours} h</span>}
+                  {signal?.unavailable && <span className="badge rejected">{t("quickEvent.notAvailable")}</span>}
+                  {signal?.assignmentConflict && <span className="badge rejected">{t("quickEvent.busy")}</span>}
+                  {signal?.restConflict && <span className="badge pending">{t("quickEvent.restLess", { hours: minRestHours })}</span>}
                   {userId && secondaryTypes.map((type) => (
                     <button key={type} type="button" className={`button subtle mini-add-inline ${segmentClassName(type)}`} onClick={() => addSegmentAssignment(userId, type)}>
                       <Plus size={14} />{segmentLabels[type]}
@@ -504,7 +515,7 @@ function AssignmentLogisticsList({
                     type="button"
                     className="icon-button mini"
                     onClick={() => userAssignments.forEach((assignment) => removeAssignment(assignment.id))}
-                    aria-label={`Quitar ${user?.name ?? "tecnico"}`}
+                    aria-label={t("quickEvent.removePerson", { name: user?.name ?? "..." })}
                   >
                     <X size={14} />
                   </button>
@@ -547,6 +558,7 @@ function AssignmentTask({
   patchAssignment: (id: string, update: Partial<AssignmentDraft>) => void;
   patchAssignmentSegment: (id: string, type: SegmentType) => void;
 }) {
+  const { t } = useTranslation();
   const window = makeWindow(assignment.date, assignment.departure, assignment.arrival);
   const stats = calculateOvertime(window.startsAt, window.endsAt);
   const segmentType = assignment.segmentType ?? "bolo";
@@ -567,20 +579,20 @@ function AssignmentTask({
             {selectableSegments.map((segment) => <option key={segment.type} value={segment.type}>{segmentLabels[segment.type]}</option>)}
           </select>
           <select value={assignment.role} onChange={(event) => patchAssignment(assignment.id, { role: event.target.value })}>{roles.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
-          <button type="button" className="icon-button mini" onClick={() => removeAssignment(assignment.id)} aria-label="Eliminar asignación"><X size={14} /></button>
+          <button type="button" className="icon-button mini" onClick={() => removeAssignment(assignment.id)} aria-label={t("quickEvent.removeAssignment")}><X size={14} /></button>
         </div>
         {!assignment.userId && (
           <div className="quick-grid two">
-            <input className="input" value={assignment.externalName ?? ""} onChange={(event) => patchAssignment(assignment.id, { externalName: event.target.value })} placeholder="Nombre freelance" />
-            <input className="input" value={assignment.externalPhone ?? ""} onChange={(event) => patchAssignment(assignment.id, { externalPhone: event.target.value })} placeholder="Contacto" />
+            <input className="input" value={assignment.externalName ?? ""} onChange={(event) => patchAssignment(assignment.id, { externalName: event.target.value })} placeholder={t("quickEvent.freelanceName")} />
+            <input className="input" value={assignment.externalPhone ?? ""} onChange={(event) => patchAssignment(assignment.id, { externalPhone: event.target.value })} placeholder={t("quickEvent.contact")} />
           </div>
         )}
-        <label className="field">Dia<input className="input picker-input" type="date" value={assignment.date} onClick={(e) => (e.currentTarget as any).showPicker?.()} onChange={(event) => patchAssignment(assignment.id, { date: event.target.value })} /></label>
+        <label className="field">{t("quickEvent.segmentDay")}<input className="input picker-input" type="date" value={assignment.date} onClick={(e) => (e.currentTarget as any).showPicker?.()} onChange={(event) => patchAssignment(assignment.id, { date: event.target.value })} /></label>
         <div className="quick-grid two">
-          <TimePicker label="Inicio" value={assignment.departure} onChange={(val) => patchAssignment(assignment.id, { departure: val })} up />
-          <TimePicker label="Fin" value={assignment.arrival} onChange={(val) => patchAssignment(assignment.id, { arrival: val })} up />
+          <TimePicker label={t("quickEvent.segmentStart")} value={assignment.departure} onChange={(val) => patchAssignment(assignment.id, { departure: val })} up />
+          <TimePicker label={t("quickEvent.segmentEnd")} value={assignment.arrival} onChange={(val) => patchAssignment(assignment.id, { arrival: val })} up />
         </div>
-        <input className="input" value={assignment.logisticsNotes} onChange={(event) => patchAssignment(assignment.id, { logisticsNotes: event.target.value })} placeholder="Nota personal opcional" />
+        <input className="input" value={assignment.logisticsNotes} onChange={(event) => patchAssignment(assignment.id, { logisticsNotes: event.target.value })} placeholder={t("quickEvent.personalNote")} />
       </div>
     </details>
   );

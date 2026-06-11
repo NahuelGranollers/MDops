@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { api, streamUrl } from "@/lib/api";
 import { useSession } from "@/lib/use-session";
+import { useTranslation } from "@/lib/i18n/context";
 import { TimePicker } from "@/components/ui";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { StatusBadge } from "@/components/status-badge";
@@ -31,6 +32,7 @@ function AvailabilityContent() {
   const searchParams = useSearchParams();
   const focusedId = searchParams.get("focus");
   const { user, isAdmin } = useSession();
+  const { t } = useTranslation();
   const [items, setItems] = useState<any[]>([]);
   const [startDate, setStartDate] = useState(toLocalDate(new Date()));
   const [startTime, setStartTime] = useState("09:00");
@@ -56,7 +58,7 @@ function AvailabilityContent() {
       .then((result) => setItems(result.filter((item) => item.status !== "cancelled")))
       .catch(() => {
         setItems([]);
-        showFeedback("error", "No se ha podido cargar la indisponibilidad");
+        showFeedback("error", t("availability.errorLoad"));
       })
       .finally(() => setLoading(false));
   }
@@ -76,16 +78,16 @@ function AvailabilityContent() {
       const startsAt = new Date(`${startDate}T${startTime}:00`).toISOString();
       const endsAt = new Date(`${endDate}T${endTime}:00`).toISOString();
       if (new Date(endsAt) <= new Date(startsAt)) {
-        showFeedback("error", "La hora final debe ser posterior al inicio");
+        showFeedback("error", t("availability.timeError"));
         return;
       }
       const body = JSON.stringify({ startsAt, endsAt, reason });
       await api("/availability", { method: "POST", body });
       setReason("");
-      showFeedback("success", "Indisponibilidad marcada");
+      showFeedback("success", t("availability.marked"));
       load();
     } catch (error) {
-      showFeedback("error", error instanceof Error ? error.message : "No se ha podido marcar");
+      showFeedback("error", error instanceof Error ? error.message : t("availability.errorMark"));
     } finally {
       setSaving(false);
     }
@@ -95,10 +97,10 @@ function AvailabilityContent() {
     setResolvingId(id);
     try {
       await api(`/availability/${id}/resolve`, { method: "POST", body: JSON.stringify({ status, resolutionComment: "" }) });
-      showFeedback("success", status === "approved" ? "Solicitud aprobada" : "Solicitud rechazada");
+      showFeedback("success", status === "approved" ? t("availability.approved") : t("availability.rejected"));
       load();
     } catch (error) {
-      showFeedback("error", error instanceof Error ? error.message : "No se ha podido resolver");
+      showFeedback("error", error instanceof Error ? error.message : t("availability.errorResolve"));
     } finally {
       setResolvingId(null);
     }
@@ -109,10 +111,10 @@ function AvailabilityContent() {
     setItems((current) => current.filter((currentItem) => currentItem.id !== item.id));
     try {
       await api(`/availability/${item.id}/cancel`, { method: "POST" });
-      showFeedback("success", "Indisponibilidad eliminada");
+      showFeedback("success", t("availability.deleted"));
       load();
     } catch (error) {
-      showFeedback("error", error instanceof Error ? error.message : "No se ha podido eliminar");
+      showFeedback("error", error instanceof Error ? error.message : t("availability.errorDelete"));
       load();
     } finally {
       setCanceling(false);
@@ -125,27 +127,27 @@ function AvailabilityContent() {
       <div className="agenda-page">
         <section className="agenda-toolbar">
           <div>
-            <div className="eyebrow">{isAdmin ? "Equipo" : "Personal"}</div>
-            <h1>Indisponibilidad</h1>
+            <div className="eyebrow">{isAdmin ? t("availability.team") : t("availability.personal")}</div>
+            <h1>{t("availability.title")}</h1>
           </div>
           {feedback && <span className={`inline-alert ${feedback.tone}`}>{feedback.message}</span>}
           <form className="toolbar-actions availability-toolbar" onSubmit={submit}>
             <input className="input" type="date" value={startDate} onClick={(e) => (e.currentTarget as any).showPicker?.()} onChange={(e) => setStartDate(e.target.value)} required />
             <TimePicker value={startTime} onChange={setStartTime} />
-            <div className="muted availability-separator">hasta</div>
+            <div className="muted availability-separator">{t("availability.from")}</div>
             <input className="input" type="date" value={endDate} onClick={(e) => (e.currentTarget as any).showPicker?.()} onChange={(e) => setEndDate(e.target.value)} required />
             <TimePicker value={endTime} onChange={setEndTime} />
-            <button className="button" disabled={saving}>{saving ? <><span className="spinner" />Marcando</> : "Marcar"}</button>
+            <button className="button" disabled={saving}>{saving ? <><span className="spinner" />{t("availability.marking")}</> : t("availability.mark")}</button>
           </form>
         </section>
 
         <section className="agenda-list">
-          {loading && <div className="event-row skeleton-card" aria-label="Cargando indisponibilidad" />}
+          {loading && <div className="event-row skeleton-card" aria-label={t("availability.loading")} />}
           {items.map((item) => (
             <article className={`event-row ${focusedId === item.id ? "is-focused" : ""}`} key={item.id}>
               <div className="date-pill"><strong>{new Date(item.startsAt).getDate()}</strong><span>{new Date(item.startsAt).toLocaleDateString("es-ES", { month: "short" })}</span></div>
               <div>
-                <strong>{isAdmin ? item.user?.name : "No disponible"}</strong>
+                <strong>{isAdmin ? item.user?.name : t("availability.notAvailable")}</strong>
                 <div className="muted">{new Date(item.startsAt).toLocaleString("es-ES")} - {new Date(item.endsAt).toLocaleString("es-ES")}</div>
                 {item.reason && <div className="muted">{item.reason}</div>}
               </div>
@@ -153,25 +155,25 @@ function AvailabilityContent() {
               <span className="row compact">
                 {isAdmin && item.status === "pending" && (
                   <>
-                    <button className="button secondary" disabled={resolvingId === item.id} onClick={() => resolve(item.id, "approved")}>Aprobar</button>
-                    <button className="button subtle-danger" disabled={resolvingId === item.id} onClick={() => resolve(item.id, "rejected")}>Rechazar</button>
+                    <button className="button secondary" disabled={resolvingId === item.id} onClick={() => resolve(item.id, "approved")}>{t("availability.approve")}</button>
+                    <button className="button subtle-danger" disabled={resolvingId === item.id} onClick={() => resolve(item.id, "rejected")}>{t("availability.reject")}</button>
                   </>
                 )}
                 {item.userId === user?.id && item.status !== "cancelled" && (
                   <>
-                    <button className="button secondary" onClick={() => setEditingItem(item)}>Modificar</button>
-                    <button className="button subtle-danger" onClick={() => setPendingCancel(item)}>Eliminar</button>
+                    <button className="button secondary" onClick={() => setEditingItem(item)}>{t("availability.modify")}</button>
+                    <button className="button subtle-danger" onClick={() => setPendingCancel(item)}>{t("availability.delete")}</button>
                   </>
                 )}
               </span>
             </article>
           ))}
-          {!loading && items.length === 0 && <div className="empty-state"><strong>Sin solicitudes.</strong><span>Cuando alguien marque indisponibilidad, aparecerá aquí.</span></div>}
+          {!loading && items.length === 0 && <div className="empty-state"><strong>{t("availability.noRequests")}</strong><span>{t("availability.noRequestsDesc")}</span></div>}
         </section>
 
         <details className="advanced-block">
-          <summary>Motivo opcional</summary>
-          <div><textarea className="textarea" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Solo si hace falta explicar algo" /></div>
+          <summary>{t("availability.optionalReason")}</summary>
+          <div><textarea className="textarea" value={reason} onChange={(e) => setReason(e.target.value)} placeholder={t("availability.reasonPlaceholder")} /></div>
         </details>
       </div>
 
@@ -179,15 +181,15 @@ function AvailabilityContent() {
         <AvailabilitySheet
           item={editingItem}
           onClose={() => setEditingItem(null)}
-          onSave={() => { setEditingItem(null); showFeedback("success", "Cambios guardados"); load(); }}
+          onSave={() => { setEditingItem(null); showFeedback("success", t("availability.changesSaved")); load(); }}
           onError={(message) => showFeedback("error", message)}
         />
       )}
       <ConfirmDialog
         open={Boolean(pendingCancel)}
-        title="Eliminar indisponibilidad"
-        description="Se quitará de la lista y dejará de contar como solicitud activa."
-        confirmLabel="Eliminar"
+        title={t("availability.dialogTitle")}
+        description={t("availability.dialogDesc")}
+        confirmLabel={t("availability.dialogConfirm")}
         destructive
         loading={canceling}
         onClose={() => setPendingCancel(null)}
@@ -198,6 +200,7 @@ function AvailabilityContent() {
 }
 
 function AvailabilitySheet({ item, onClose, onSave, onError }: { item: any; onClose: () => void; onSave: () => void; onError: (message: string) => void }) {
+  const { t } = useTranslation();
   const [startDate, setStartDate] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -225,7 +228,7 @@ function AvailabilitySheet({ item, onClose, onSave, onError }: { item: any; onCl
       await api(`/availability/${item.id}`, { method: "PUT", body });
       onSave();
     } catch (e) {
-      onError(e instanceof Error ? e.message : "Error al guardar");
+      onError(e instanceof Error ? e.message : t("availability.errorSave"));
     } finally {
       setSaving(false);
     }
@@ -235,25 +238,25 @@ function AvailabilitySheet({ item, onClose, onSave, onError }: { item: any; onCl
     <div className="sheet-backdrop" role="dialog" aria-modal="true" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <form className="sheet" onSubmit={submit}>
         <div className="sheet-head">
-          <div><span className="eyebrow">Modificar</span><h2>Indisponibilidad</h2></div>
-          <button type="button" className="icon-button" onClick={onClose} aria-label="Cerrar">&times;</button>
+          <div><span className="eyebrow">{t("availability.sheetModify")}</span><h2>{t("availability.sheetTitle")}</h2></div>
+          <button type="button" className="icon-button" onClick={onClose} aria-label={t("availability.sheetClose")}>&times;</button>
         </div>
         <div className="sheet-body availability-sheet-body scrollbar-hide">
           <div className="quick-grid two">
-            <label className="field">Fecha inicio<input className="input" type="date" value={startDate} onClick={(e) => (e.currentTarget as any).showPicker?.()} onChange={(e) => setStartDate(e.target.value)} required /></label>
-            <TimePicker label="Hora inicio" value={startTime} onChange={setStartTime} />
+            <label className="field">{t("availability.sheetStartDate")}<input className="input" type="date" value={startDate} onClick={(e) => (e.currentTarget as any).showPicker?.()} onChange={(e) => setStartDate(e.target.value)} required /></label>
+            <TimePicker label={t("availability.sheetStartTime")} value={startTime} onChange={setStartTime} />
           </div>
           <div className="quick-grid two">
-            <label className="field">Fecha fin<input className="input" type="date" value={endDate} onClick={(e) => (e.currentTarget as any).showPicker?.()} onChange={(e) => setEndDate(e.target.value)} required /></label>
-            <TimePicker label="Hora fin" value={endTime} onChange={setEndTime} />
+            <label className="field">{t("availability.sheetEndDate")}<input className="input" type="date" value={endDate} onClick={(e) => (e.currentTarget as any).showPicker?.()} onChange={(e) => setEndDate(e.target.value)} required /></label>
+            <TimePicker label={t("availability.sheetEndTime")} value={endTime} onChange={setEndTime} />
           </div>
-          <label className="field">Motivo
-            <textarea className="textarea" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Explica el motivo si es necesario" />
+          <label className="field">{t("availability.sheetReason")}
+            <textarea className="textarea" value={reason} onChange={(e) => setReason(e.target.value)} placeholder={t("availability.sheetReasonPlaceholder")} />
           </label>
         </div>
         <div className="sheet-actions">
-          <button type="button" className="button secondary" onClick={onClose}>Cancelar</button>
-          <button className="button" disabled={saving}>{saving ? "Guardando..." : "Guardar cambios"}</button>
+          <button type="button" className="button secondary" onClick={onClose}>{t("availability.cancel")}</button>
+          <button className="button" disabled={saving}>{saving ? t("availability.saving") : t("availability.saveChanges")}</button>
         </div>
       </form>
     </div>

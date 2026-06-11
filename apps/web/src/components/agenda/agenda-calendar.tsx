@@ -1,6 +1,7 @@
 "use client";
 
 import { CalendarDays, Plus, UserRound } from "lucide-react";
+import { useTranslation } from "@/lib/i18n/context";
 import { assignmentNames, dateLabel, segmentClassName, segmentLabels, sortSegmentsByOpsOrder, timeLabel, type ViewMode } from "@/components/agenda/agenda-utils";
 
 export function AgendaSkeleton() {
@@ -20,6 +21,7 @@ export function AgendaSkeleton() {
 }
 
 export function AdminCalendar({ mode, days, events, onCreate, onSelect }: { mode: ViewMode; days: Date[]; events: any[]; onCreate: (date?: Date) => void; onSelect: (event: any) => void }) {
+  const { t } = useTranslation();
   if (mode === "list") {
     return <div className="agenda-list">{events.map((event) => <EventRow key={event.id} event={event} onClick={() => onSelect(event)} />)}{events.length === 0 && <EmptyAgenda onCreate={onCreate} />}</div>;
   }
@@ -36,7 +38,7 @@ export function AdminCalendar({ mode, days, events, onCreate, onSelect }: { mode
             </button>
             <div className="day-events">
               {dayEvents.map((event) => <EventBlock key={event._calendarId ?? event.id} event={event} onClick={() => onSelect(event._parent ?? event)} />)}
-              {dayEvents.length === 0 && <button className="empty-slot" onClick={() => onCreate(day)}>Hueco libre</button>}
+              {dayEvents.length === 0 && <button className="empty-slot" onClick={() => onCreate(day)}>{t("agendaCalendar.emptySlot")}</button>}
             </div>
           </section>
         );
@@ -46,11 +48,12 @@ export function AdminCalendar({ mode, days, events, onCreate, onSelect }: { mode
 }
 
 export function UserAgenda({ events, onSelect }: { events: any[]; onSelect: (event: any) => void }) {
+  const { t } = useTranslation();
   const rows = events.flatMap((event) => projectEventSegments(event));
   return (
     <div className="user-agenda">
       {rows.map((event) => <EventRow key={event._calendarId ?? event.id} event={event} userFocused onClick={() => onSelect(event._parent ?? event)} />)}
-      {rows.length === 0 && <div className="empty-state"><CalendarDays size={30} /><strong>No hay bolos en esta vista.</strong><span>Cuando haya agenda, aparecera aqui con hora, local y equipo.</span></div>}
+      {rows.length === 0 && <div className="empty-state"><CalendarDays size={30} /><strong>{t("agendaCalendar.noEventsInView")}</strong><span>{t("agendaCalendar.noEventsDesc")}</span></div>}
     </div>
   );
 }
@@ -98,12 +101,13 @@ function projectEventSegments(event: any) {
 }
 
 function EmptyAgenda({ onCreate }: { onCreate: () => void }) {
+  const { t } = useTranslation();
   return (
     <div className="empty-state">
       <CalendarDays size={30} />
-      <strong>Semana limpia.</strong>
-      <span>Crea el primer bolo y asigna equipo en menos de un minuto.</span>
-      <button className="button" onClick={onCreate}><Plus size={17} />Nuevo bolo</button>
+      <strong>{t("agendaCalendar.cleanWeek")}</strong>
+      <span>{t("agendaCalendar.cleanWeekDesc")}</span>
+      <button className="button" onClick={onCreate}><Plus size={17} />{t("agendaCalendar.newEvent")}</button>
     </div>
   );
 }

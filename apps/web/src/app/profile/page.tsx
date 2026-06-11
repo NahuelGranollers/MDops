@@ -6,12 +6,14 @@ import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { api, clearSession } from "@/lib/api";
 import { useSession } from "@/lib/use-session";
+import { useTranslation } from "@/lib/i18n/context";
 import { UserAvatar } from "@/components/user-avatar";
 import type { SessionUser } from "@/lib/api";
 
 export default function ProfilePage() {
   const router = useRouter();
   const { user } = useSession();
+  const { t } = useTranslation();
   const [profileUser, setProfileUser] = useState<SessionUser | null>(null);
   const [profileColor, setProfileColor] = useState("#0f766e");
   const [currentPassword, setCurrentPassword] = useState("");
@@ -35,11 +37,11 @@ export default function ProfilePage() {
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     if (newPassword !== confirmPassword) {
-      showFeedback("error", "Las contraseñas no coinciden");
+      showFeedback("error", t("profile.passwordMismatch"));
       return;
     }
     if (newPassword.length < 4) {
-      showFeedback("error", "La nueva contraseña debe tener al menos 4 caracteres");
+      showFeedback("error", t("profile.passwordTooShort"));
       return;
     }
     setSaving(true);
@@ -51,13 +53,13 @@ export default function ProfilePage() {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      showFeedback("success", "Contraseña cambiada. Vuelve a entrar con la nueva.");
+      showFeedback("success", t("profile.passwordChanged"));
       window.setTimeout(() => {
         clearSession();
         router.replace("/login");
       }, 1200);
     } catch (error) {
-      showFeedback("error", error instanceof Error ? error.message : "No se ha podido cambiar la contraseña");
+      showFeedback("error", error instanceof Error ? error.message : t("profile.passwordError"));
     } finally {
       setSaving(false);
     }
@@ -72,9 +74,9 @@ export default function ProfilePage() {
         body: JSON.stringify({ profileColor })
       });
       setProfileUser(result.user);
-      showFeedback("success", "Perfil actualizado");
+      showFeedback("success", t("profile.profileUpdated"));
     } catch (error) {
-      showFeedback("error", error instanceof Error ? error.message : "No se ha podido guardar el perfil");
+      showFeedback("error", error instanceof Error ? error.message : t("profile.profileError"));
     } finally {
       setSavingProfile(false);
     }
@@ -88,9 +90,9 @@ export default function ProfilePage() {
       body.append("file", file);
       const result = await api<{ user: SessionUser }>("/auth/avatar", { method: "POST", body });
       setProfileUser(result.user);
-      showFeedback("success", "Foto actualizada");
+      showFeedback("success", t("profile.photoUpdated"));
     } catch (error) {
-      showFeedback("error", error instanceof Error ? error.message : "No se ha podido subir la foto");
+      showFeedback("error", error instanceof Error ? error.message : t("profile.photoError"));
     } finally {
       setSavingProfile(false);
     }
@@ -101,9 +103,9 @@ export default function ProfilePage() {
     try {
       const result = await api<{ user: SessionUser }>("/auth/avatar", { method: "DELETE" });
       setProfileUser(result.user);
-      showFeedback("success", "Foto eliminada");
+      showFeedback("success", t("profile.photoRemoved"));
     } catch (error) {
-      showFeedback("error", error instanceof Error ? error.message : "No se ha podido eliminar la foto");
+      showFeedback("error", error instanceof Error ? error.message : t("profile.photoRemoveError"));
     } finally {
       setSavingProfile(false);
     }
@@ -116,17 +118,17 @@ export default function ProfilePage() {
       <div className="agenda-page">
         <section className="agenda-toolbar">
           <div>
-            <div className="eyebrow">Cuenta</div>
-            <h1>Perfil</h1>
+            <div className="eyebrow">{t("profile.account")}</div>
+            <h1>{t("profile.title")}</h1>
           </div>
           {feedback && <span className={`inline-alert ${feedback.tone}`}>{feedback.message}</span>}
         </section>
 
         <section className="card profile-card">
           <div className="profile-summary">
-            <UserAvatar user={displayUser ? { ...displayUser, profileColor } : { name: "MD", profileColor }} size="lg" />
+            <UserAvatar user={displayUser ? { ...displayUser, profileColor } : { name: "PISARRA", profileColor }} size="lg" />
             <div>
-              <h2>{displayUser?.name ?? "Usuario"}</h2>
+              <h2>{displayUser?.name ?? "Usuari"}</h2>
               <p className="muted">{displayUser?.email}</p>
             </div>
           </div>
@@ -135,45 +137,45 @@ export default function ProfilePage() {
         <form className="card grid profile-form" onSubmit={saveProfile}>
           <div className="between">
             <div>
-              <h2>Foto y color</h2>
-              <p className="muted">Se usa en agenda, asignaciones y equipo.</p>
+              <h2>{t("profile.photoAndColor")}</h2>
+              <p className="muted">{t("profile.photoAndColorDesc")}</p>
             </div>
           </div>
           <div className="profile-visual-grid">
-            <label className="field">Color
+            <label className="field">{t("profile.color")}
               <input className="input color-input" type="color" value={profileColor} onChange={(event) => setProfileColor(event.target.value)} />
             </label>
-            <label className="field">Foto
+            <label className="field">{t("profile.photo")}
               <input className="input" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => uploadAvatar(event.target.files?.[0] ?? null)} />
             </label>
           </div>
           <div className="sheet-actions">
-            {displayUser?.avatarUrl && <button type="button" className="button subtle-danger" onClick={removeAvatar} disabled={savingProfile}>Quitar foto</button>}
-            <button className="button" disabled={savingProfile}>{savingProfile ? <><span className="spinner" />Guardando</> : "Guardar perfil"}</button>
+            {displayUser?.avatarUrl && <button type="button" className="button subtle-danger" onClick={removeAvatar} disabled={savingProfile}>{t("profile.removePhoto")}</button>}
+            <button className="button" disabled={savingProfile}>{savingProfile ? <><span className="spinner" />{t("profile.saving")}</> : t("profile.saveProfile")}</button>
           </div>
         </form>
 
         <form className="card grid profile-form" onSubmit={submit}>
           <div className="between">
             <div>
-              <h2>Cambiar contraseña</h2>
-              <p className="muted">Por seguridad, tendrás que iniciar sesión de nuevo.</p>
+              <h2>{t("profile.changePassword")}</h2>
+              <p className="muted">{t("profile.changePasswordDesc")}</p>
             </div>
             <KeyRound size={20} className="muted" />
           </div>
-          <label className="field">Contraseña actual
+          <label className="field">{t("profile.currentPassword")}
             <input className="input" type="password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} autoComplete="current-password" required />
           </label>
           <div className="quick-grid two">
-            <label className="field">Nueva contraseña
+            <label className="field">{t("profile.newPassword")}
               <input className="input" type="password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} autoComplete="new-password" required />
             </label>
-            <label className="field">Repetir contraseña
+            <label className="field">{t("profile.confirmPassword")}
               <input className="input" type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} autoComplete="new-password" required />
             </label>
           </div>
           <div className="sheet-actions">
-            <button className="button" disabled={saving}>{saving ? <><span className="spinner" />Guardando</> : "Cambiar contraseña"}</button>
+            <button className="button" disabled={saving}>{saving ? <><span className="spinner" />{t("profile.saving")}</> : t("profile.changePasswordBtn")}</button>
           </div>
         </form>
       </div>
