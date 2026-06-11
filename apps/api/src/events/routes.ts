@@ -202,3 +202,259 @@ async function restConflictWindows(
   });
   return users;
 }
+
+export async function eventRoutes(app: FastifyInstance) {
+  app.get("/events", async (request) => {
+    const tenantId = request.user!.tenantId;
+    const isAdminUser = isAdmin(request.user!);
+    const where: any = { tenantId, deletedAt: null };
+    if (!isAdminUser) {
+      where.assignments = { some: { userId: request.user!.id } };
+    }
+    return prisma.event.findMany({
+      where,
+      include: {
+        logistics: true,
+        segments: { orderBy: { startsAt: "asc" } },
+        assignments: {
+          include: { user: { select: { id: true, name: true, profileColor: true } }, segment: true },
+          orderBy: { createdAt: "asc" }
+        },
+        comments: { orderBy: { createdAt: "asc" }, take: 3 },
+        attachments: { select: { id: true, kind: true, filename: true, mimeType: true, sizeBytes: true, createdAt: true } }
+      },
+      orderBy: { startsAt: "asc" }
+    });
+  });
+
+  app.post("/events", async (request, reply) => {
+    const input = eventSchema.parse(request.body);
+    const tenantId = request.user!.tenantId;
+    const segments = normalizeSegments(input);
+    const policy = await getRestPolicy(tenantId);
+    const candidates = candidateAssignmentWindows(input, segments);
+    const windows: AssignmentWindow[] = candidates.map((c: any) => ({ userId: c.userId, startsAt: c.startsAt, endsAt: c.endsAt }));
+    const restConflicts = detectRestConflicts(windows, policy.minRestHours);
+    if (restConflicts.length > 0 && policy.restConflictMode === "block" && !input.forceConflicts) {
+      return reply.code(409).send({ message: "No se cumple el descanso mínimo entre eventos.", conflicts: restConflicts });
+    }
+    const overlapConflicts = await assignmentOverlapConflicts(tenantId, input, segments);
+    const event = await prisma.$transaction(async (tx) => {
+      const created = await tx.event.create({
+        data: {
+          tenantId,
+          title: input.title,
+          startsAt: new Date(input.startsAt),
+          endsAt: new Date(input.endsAt),
+          city: input.city,
+          venueName: input.venueName,
+          venueAddress: input.venueAddress ?? null,
+          venuePlaceId: input.venuePlaceId ?? null,
+          hotelName: input.hotelName ?? null,
+          hotelAddress: input.hotelAddress ?? null,
+          hotelPlaceId: input.hotelPlaceId ?? null,
+          status: input.status,
+          visibleNotes: input.visibleNotes ?? null,
+          internalNotes: input.internalNotes ?? null,
+          gearNotes: input.gearNotes ?? null,
+          tags: input.tags ?? [],
+          createdById: request.user!.id,
+          segments: { create: segments.map((s: any) => ({ type: s.type, startsAt: s.startsAt, endsAt: s.endsAt, notes: s.notes })) },
+          logistics: input.logistics ? {
+            create: {
+              departureAt: input.logistics.departureAt ? new Date(input.logistics.departureAt) : null,
+              arrivalAt: input.logistics.arrivalAt ? new Date(input.logistics.arrivalAt) : null,
+              returnAt: input.logistics.returnAt ? new Date(input.logistics.returnAt) : null,
+              contactName: input.logistics.contactName ?? null,
+              contactPhone: input.logistics.contactPhone ?? null,
+              venuePhone: input.logistics.venuePhone ?? null,
+              budgetCents: input.logistics.budgetCents ?? null
+            }
+          } : undefined
+        }
+      });
+      const segmentIds = new Map<string, string>();
+      const allSegments = await tx.eventScheduleSegment.findMany({ where: { eventId: created.id } });
+      for (const seg of allSegments) segmentIds.set(seg.type, seg.id);
+      const assignments = assignmentData(input.assignments, segmentIds);
+      if (assignments.length > 0) {
+        await tx.eventAssignment.createMany({ data: assignments.map((a: any) => ({ ...a, eventId: created.id })) });
+      }
+      await saveRecurringFreelancers(tx, tenantId, input.assignments);
+      return created;
+    });
+    if (restConflicts.length > 0 || overlapConflicts.length > 0) {
+      const allConflicts = [...restConflicts, ...overlapConflicts];
+      const eventName = `${event.venueName || event.title} (${event.city})`;
+      await createNotifications(
+        allConflicts.map((c: any) => ({
+          tenantId,
+          userId: c.userId,
+          type: "conflict" as any,
+          title: "Conflicto detectado",
+          body: `Conflicto en ${eventName}`,
+          entityId: event.id
+        }))
+      );
+    }
+    await audit(request.user, "create", "event", event.id, undefined, event);
+    publish({ tenantId, topic: "events", payload: { action: "created", id: event.id } });
+    return reply.code(201).send({ event, conflicts: [...restConflicts, ...overlapConflicts] });
+  });
+
+  app.put("/events/:id", async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const input = eventSchema.parse(request.body);
+    const tenantId = request.user!.tenantId;
+    const before = await prisma.event.findFirst({ where: { id, tenantId, deletedAt: null } });
+    if (!before) return reply.notFound("Evento no encontrado.");
+    const segments = normalizeSegments(input);
+    const policy = await getRestPolicy(tenantId);
+    const candidates = candidateAssignmentWindows(input, segments);
+    const windows: AssignmentWindow[] = candidates.map((c: any) => ({ userId: c.userId, startsAt: c.startsAt, endsAt: c.endsAt }));
+    const restConflicts = detectRestConflicts(windows, policy.minRestHours);
+    if (restConflicts.length > 0 && policy.restConflictMode === "block" && !input.forceConflicts) {
+      return reply.code(409).send({ message: "No se cumple el descanso mínimo entre eventos.", conflicts: restConflicts });
+    }
+    const overlapConflicts = await assignmentOverlapConflicts(tenantId, input, segments, id);
+    const event = await prisma.$transaction(async (tx) => {
+      await tx.event.update({ where: { id }, data: { deletedAt: new Date() } });
+      const updated = await tx.event.create({
+        data: {
+          tenantId,
+          title: input.title,
+          startsAt: new Date(input.startsAt),
+          endsAt: new Date(input.endsAt),
+          city: input.city,
+          venueName: input.venueName,
+          venueAddress: input.venueAddress ?? null,
+          venuePlaceId: input.venuePlaceId ?? null,
+          hotelName: input.hotelName ?? null,
+          hotelAddress: input.hotelAddress ?? null,
+          hotelPlaceId: input.hotelPlaceId ?? null,
+          status: input.status,
+          visibleNotes: input.visibleNotes ?? null,
+          internalNotes: input.internalNotes ?? null,
+          gearNotes: input.gearNotes ?? null,
+          tags: input.tags ?? [],
+          createdById: request.user!.id,
+          segments: { create: segments.map((s: any) => ({ type: s.type, startsAt: s.startsAt, endsAt: s.endsAt, notes: s.notes })) },
+          logistics: input.logistics ? {
+            create: {
+              departureAt: input.logistics.departureAt ? new Date(input.logistics.departureAt) : null,
+              arrivalAt: input.logistics.arrivalAt ? new Date(input.logistics.arrivalAt) : null,
+              returnAt: input.logistics.returnAt ? new Date(input.logistics.returnAt) : null,
+              contactName: input.logistics.contactName ?? null,
+              contactPhone: input.logistics.contactPhone ?? null,
+              venuePhone: input.logistics.venuePhone ?? null,
+              budgetCents: input.logistics.budgetCents ?? null
+            }
+          } : undefined
+        }
+      });
+      const segmentIds = new Map<string, string>();
+      const allSegments = await tx.eventScheduleSegment.findMany({ where: { eventId: updated.id } });
+      for (const seg of allSegments) segmentIds.set(seg.type, seg.id);
+      const assignments = assignmentData(input.assignments, segmentIds);
+      if (assignments.length > 0) {
+        await tx.eventAssignment.createMany({ data: assignments.map((a: any) => ({ ...a, eventId: updated.id })) });
+      }
+      await saveRecurringFreelancers(tx, tenantId, input.assignments);
+      return { ...(await tx.event.findUnique({
+        where: { id: updated.id },
+        include: { logistics: true, segments: true, assignments: true }
+      })) };
+    });
+    await audit(request.user, "update", "event", id, before, event);
+    publish({ tenantId, topic: "events", payload: { action: "updated", id } });
+    return { event, conflicts: [...restConflicts, ...overlapConflicts] };
+  });
+
+  app.post("/events/:id/duplicate", async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const tenantId = request.user!.tenantId;
+    const original = await prisma.event.findFirst({
+      where: { id, tenantId, deletedAt: null },
+      include: { segments: true, assignments: true, logistics: true }
+    });
+    if (!original) return reply.notFound("Evento no encontrado.");
+    const duplicated = await prisma.event.create({
+      data: {
+        tenantId,
+        title: `${original.title} (copia)`,
+        startsAt: original.startsAt,
+        endsAt: original.endsAt,
+        city: original.city,
+        venueName: original.venueName,
+        venueAddress: original.venueAddress,
+        venuePlaceId: original.venuePlaceId,
+        hotelName: original.hotelName,
+        hotelAddress: original.hotelAddress,
+        hotelPlaceId: original.hotelPlaceId,
+        status: "pending",
+        visibleNotes: original.visibleNotes,
+        internalNotes: original.internalNotes,
+        gearNotes: original.gearNotes,
+        tags: original.tags,
+        createdById: request.user!.id,
+        segments: { create: original.segments.map((s) => ({ type: s.type, startsAt: s.startsAt, endsAt: s.endsAt, notes: s.notes })) },
+        logistics: original.logistics ? {
+          create: {
+            departureAt: original.logistics.departureAt,
+            arrivalAt: original.logistics.arrivalAt,
+            returnAt: original.logistics.returnAt,
+            contactName: original.logistics.contactName,
+            contactPhone: original.logistics.contactPhone,
+            venuePhone: original.logistics.venuePhone,
+            budgetCents: original.logistics.budgetCents
+          }
+        } : undefined,
+        assignments: { create: original.assignments.map((a) => ({ userId: a.userId, externalName: a.externalName, externalPhone: a.externalPhone, role: a.role, personalNotes: a.personalNotes, departureAt: a.departureAt, arrivalAt: a.arrivalAt, logisticsNotes: a.logisticsNotes })) }
+      }
+    });
+    await audit(request.user, "create", "event", duplicated.id, undefined, duplicated);
+    publish({ tenantId, topic: "events", payload: { action: "created", id: duplicated.id } });
+    return reply.code(201).send(duplicated);
+  });
+
+  app.delete("/events/:id", async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const tenantId = request.user!.tenantId;
+    const before = await prisma.event.findFirst({ where: { id, tenantId, deletedAt: null } });
+    if (!before) return reply.notFound("Evento no encontrado.");
+    const event = await prisma.event.update({ where: { id }, data: { deletedAt: new Date() } });
+    await audit(request.user, "cancel", "event", id, before, event);
+    publish({ tenantId, topic: "events", payload: { action: "deleted", id } });
+    return { ok: true };
+  });
+
+  app.post("/events/:id/attachments", async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const tenantId = request.user!.tenantId;
+    const event = await prisma.event.findFirst({ where: { id, tenantId, deletedAt: null } });
+    if (!event) return reply.notFound("Evento no encontrado.");
+    const file = await request.file();
+    if (!file) return reply.badRequest("Falta el archivo.");
+    const kind = (request.query as any)?.kind || null;
+    const uploadDir = path.resolve(env.UPLOAD_DIR, "attachments");
+    await mkdir(uploadDir, { recursive: true });
+    const ext = path.extname(file.filename) || ".bin";
+    const filename = `${nanoid(16)}${ext}`;
+    const storagePath = path.join(uploadDir, filename);
+    await pipeline(file.file, createWriteStream(storagePath));
+    const attachment = await prisma.attachment.create({
+      data: {
+        tenantId,
+        eventId: id,
+        uploadedById: request.user!.id,
+        filename: file.filename,
+        kind,
+        mimeType: file.mimetype,
+        sizeBytes: (await stat(storagePath)).size,
+        storagePath: `/uploads/attachments/${filename}`
+      }
+    });
+    publish({ tenantId, topic: "events", payload: { action: "attachment_added", id } });
+    return reply.code(201).send(attachment);
+  });
+}
