@@ -31,7 +31,7 @@ jobs:
           PUPPETEER_SKIP_DOWNLOAD: true
       - run: pnpm --filter @md-ops/web build
         env:
-          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL || 'https://md-ops-api.vercel.app' }}
+          NEXT_PUBLIC_API_URL: https://m-dops-api.vercel.app
           NEXT_PUBLIC_BASE_PATH: /MDops
           STATIC_EXPORT: true
       - uses: actions/configure-pages@v5
