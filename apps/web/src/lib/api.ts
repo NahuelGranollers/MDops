@@ -13,6 +13,7 @@ export type SessionUser = {
 };
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "/api";
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "";
 
 function apiOrigin() {
   if (API_URL.startsWith("http")) return API_URL.replace(/\/api\/?$/, "");
@@ -102,7 +103,8 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
     sendClientLog({ type: "api_error", path, method, statusCode: response.status, durationMs, message, data: payload });
     if (response.status === 401 && typeof window !== "undefined" && !path.startsWith("/auth/login")) {
       clearSession();
-      if (window.location.pathname !== "/login") window.location.assign("/login");
+      const loginPath = `${BASE_PATH}/login/`;
+      if (window.location.pathname !== loginPath) window.location.assign(loginPath);
     }
     throw new ApiError(message, response.status, payload);
   }
