@@ -103,8 +103,8 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
     sendClientLog({ type: "api_error", path, method, statusCode: response.status, durationMs, message, data: payload });
     if (response.status === 401 && typeof window !== "undefined" && !path.startsWith("/auth/login")) {
       clearSession();
-      const loginPath = `${BASE_PATH}/login/`;
-      if (window.location.pathname !== loginPath) window.location.assign(loginPath);
+      const loginPath = `${BASE_PATH}/login/?error=401&from=${encodeURIComponent(path)}&msg=${encodeURIComponent(message)}`;
+      if (window.location.pathname !== BASE_PATH + "/login/") window.location.assign(loginPath);
     }
     throw new ApiError(message, response.status, payload);
   }

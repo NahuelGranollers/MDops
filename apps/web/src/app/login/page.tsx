@@ -17,6 +17,16 @@ export default function LoginPage() {
   const [autoLoginActive, setAutoLoginActive] = useState(false);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const errorFrom = params.get("from");
+    const errorMsg = params.get("msg");
+    if (errorFrom) {
+      setError(`Sessió no verificada (${errorFrom}): ${errorMsg || "error desconegut"}`);
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  }, []);
+
+  useEffect(() => {
     let active = true;
 
     async function runAutoLogin() {
