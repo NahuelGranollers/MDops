@@ -20,7 +20,7 @@ export async function userRoutes(app: FastifyInstance) {
       where: {
         tenantId: request.user!.tenantId,
         deletedAt: null,
-        email: assignableOnly ? { not: "admin@md.local" } : undefined
+        email: assignableOnly ? { notIn: ["admin@md.local", "pissarra@md.local"] } : { not: "pissarra@md.local" }
       },
       select: { id: true, name: true, email: true, phone: true, profileColor: true, avatarUrl: true, isActive: true, roles: { include: { role: true } } },
       orderBy: { name: "asc" }
@@ -30,6 +30,7 @@ export async function userRoutes(app: FastifyInstance) {
   app.get("/roles", { preHandler: requireSystemManager() }, async () => {
     const [roles, allPermissions] = await Promise.all([
       prisma.role.findMany({
+        where: { key: { not: "pissarra" } },
         include: { permissions: { include: { permission: true }, orderBy: { permission: { key: "asc" } } } },
         orderBy: { name: "asc" }
       }),

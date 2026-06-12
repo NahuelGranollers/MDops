@@ -91,7 +91,7 @@ export default function SettingsPage() {
     if (settings.restConflictMode) setRestConflictMode(settings.restConflictMode);
     if (settings.timezone) setTimezone(settings.timezone);
     setUsers(usersResult);
-    setRoles(rolesResult.roles.filter((role) => role.key !== "admin"));
+    setRoles(rolesResult.roles.filter((role) => role.key !== "admin" && role.key !== "pissarra"));
     setEmailStatus(emailStatusResult);
     if (user?.email && !user.email.toLowerCase().endsWith(".local")) {
       setTestEmail((current) => current || user.email);
@@ -102,7 +102,7 @@ export default function SettingsPage() {
       phone: user.phone ?? "",
       profileColor: user.profileColor ?? "#0f766e",
       isActive: user.isActive,
-      roleKeys: roleKeys(user).filter((key) => key !== "admin")
+      roleKeys: roleKeys(user).filter((key) => key !== "admin" && key !== "pissarra")
     }])));
     setLoading(false);
   }
@@ -307,7 +307,7 @@ export default function SettingsPage() {
               </form>
 
               <div className="management-list simple-management-list">
-                {users.filter((user) => user.email !== "admin@md.local").map((user) => {
+                {users.filter((user) => user.email !== "admin@md.local" && user.email !== "pissarra@md.local").map((user) => {
                   const draft = draftUsers[user.id];
                   if (!draft) return null;
                   return (

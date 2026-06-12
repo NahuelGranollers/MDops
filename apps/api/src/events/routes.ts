@@ -218,6 +218,12 @@ export async function eventRoutes(app: FastifyInstance) {
         logistics: true,
         segments: { orderBy: { startsAt: "asc" } },
         assignments: {
+          where: {
+            OR: [
+              { userId: null },
+              { user: { email: { not: "pissarra@md.local" } } }
+            ]
+          },
           include: { user: { select: { id: true, name: true, profileColor: true } }, segment: true },
           orderBy: { createdAt: "asc" }
         },
@@ -422,25 +428,26 @@ export async function eventRoutes(app: FastifyInstance) {
   app.get("/events/weekly-planning", async (request) => {
     const tenantId = request.user!.tenantId;
     const now = new Date();
-    const esOptions: Intl.DateTimeFormatOptions = { timeZone: "Europe/Madrid", year: "numeric", month: "2-digit", day: "2-digit", weekday: "long" };
     const fmtDay = new Intl.DateTimeFormat("es", { timeZone: "Europe/Madrid", year: "numeric", month: "2-digit", day: "2-digit" });
-    const fmtWeekday = new Intl.DateTimeFormat("es", { timeZone: "Europe/Madrid", weekday: "long" });
     const parts = fmtDay.formatToParts(now);
     const todayStr = `${parts.find((p) => p.type === "year")!.value}-${parts.find((p) => p.type === "month")!.value}-${parts.find((p) => p.type === "day")!.value}`;
     const today = new Date(todayStr + "T00:00:00+02:00");
     const dayOfWeek = today.getUTCDay();
-    const daysUntilSunday = dayOfWeek === 0 ? 0 : 7 - dayOfWeek;
-    const weekEnd = new Date(today);
-    weekEnd.setUTCDate(weekEnd.getUTCDate() + daysUntilSunday);
-    const lastDay = new Date(today);
-    lastDay.setUTCDate(lastDay.getUTCDate() + 6);
+    const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const monday = new Date(today);
+    monday.setUTCDate(monday.getUTCDate() - daysToMonday);
+    const daysToSunday = dayOfWeek === 0 ? 0 : 7 - dayOfWeek;
+    const sunday = new Date(today);
+    sunday.setUTCDate(sunday.getUTCDate() + daysToSunday);
+    const weekEnd = new Date(monday);
+    weekEnd.setUTCDate(weekEnd.getUTCDate() + 6);
 
     const events = await prisma.event.findMany({
       where: {
         tenantId,
         deletedAt: null,
         status: { not: "cancelled" },
-        startsAt: { gte: today, lte: lastDay }
+        startsAt: { gte: monday, lte: sunday }
       },
       include: {
         assignments: {
@@ -454,8 +461,8 @@ export async function eventRoutes(app: FastifyInstance) {
 
     const dayNames = ["diumenge", "dilluns", "dimarts", "dimecres", "dijous", "divendres", "dissabte"];
     const groups: Array<{ date: string; dayName: string; weekType: "current" | "next"; events: any[] }> = [];
-    const cursor = new Date(today);
-    while (cursor <= lastDay) {
+    const cursor = new Date(monday);
+    while (cursor <= sunday) {
       const dateStr = cursor.toISOString().slice(0, 10);
       const dayName = dayNames[cursor.getUTCDay()]!;
       const weekType = cursor <= weekEnd ? "current" : "next";
