@@ -83,7 +83,8 @@ export default function PlanningPage() {
       <header className="planning-header">
         <h1>PISARRA MD</h1>
         <span className="planning-legend">
-          <span className="legend-dot current" />Dilluns - Diumenge
+          <span className="legend-dot current" />Aquesta setmana
+          <span className="legend-dot next" />Setmana vinent
           <span className="muted" style={{ fontSize: "0.85em", marginLeft: 8 }}>— 7 dies</span>
         </span>
       </header>

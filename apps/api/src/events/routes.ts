@@ -439,15 +439,15 @@ export async function eventRoutes(app: FastifyInstance) {
     const daysToSunday = dayOfWeek === 0 ? 0 : 7 - dayOfWeek;
     const sunday = new Date(today);
     sunday.setUTCDate(sunday.getUTCDate() + daysToSunday);
-    const weekEnd = new Date(monday);
-    weekEnd.setUTCDate(weekEnd.getUTCDate() + 6);
+    const nextSunday = new Date(sunday);
+    nextSunday.setUTCDate(nextSunday.getUTCDate() + 7);
 
     const events = await prisma.event.findMany({
       where: {
         tenantId,
         deletedAt: null,
         status: { not: "cancelled" },
-        startsAt: { gte: monday, lte: sunday }
+        startsAt: { gte: monday, lte: nextSunday }
       },
       include: {
         assignments: {
@@ -465,12 +465,15 @@ export async function eventRoutes(app: FastifyInstance) {
     while (cursor <= sunday) {
       const dateStr = cursor.toISOString().slice(0, 10);
       const dayName = dayNames[cursor.getUTCDay()]!;
-      const weekType = cursor <= weekEnd ? "current" : "next";
+      const isPast = cursor < today;
+      const effectiveDate = new Date(isPast ? cursor.getTime() + 7 * 86400000 : cursor);
+      const weekType = isPast ? "next" : "current";
+      const effectiveDateStr = effectiveDate.toISOString().slice(0, 10);
       const dayEvents = events.filter((event) => {
         const eDate = new Date(event.startsAt);
         const eParts = fmtDay.formatToParts(eDate);
         const eStr = `${eParts.find((p) => p.type === "year")!.value}-${eParts.find((p) => p.type === "month")!.value}-${eParts.find((p) => p.type === "day")!.value}`;
-        return eStr === dateStr;
+        return eStr === effectiveDateStr;
       });
       groups.push({
         date: dateStr,
