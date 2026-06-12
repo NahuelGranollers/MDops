@@ -34,6 +34,8 @@ jobs:
           NEXT_PUBLIC_API_URL: https://m-dops-api.vercel.app/api
           NEXT_PUBLIC_BASE_PATH: /MDops
           STATIC_EXPORT: true
+      - name: Remove RSC payload files (fix GitHub Pages serving .txt instead of .html)
+        run: find apps/web/out -type f -name "index.txt" -delete
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
