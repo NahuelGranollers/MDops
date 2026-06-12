@@ -78,7 +78,17 @@ export default function LoginPage() {
     setError("");
     try {
       const result = await api<{ accessToken: string; refreshToken: string; user?: { roles: string[] } }>("/auth/login", { method: "POST", body: JSON.stringify({ identifier, password }) });
+      setSession(result.accessToken, result.refreshToken);
       window.localStorage.setItem("md-ops-last-user", identifier);
+      try {
+        const me = await api<{ user: { name: string } }>("/auth/me");
+        console.log("TOKEN WORKS, user:", me.user?.name);
+      } catch (meErr) {
+        const msg = meErr instanceof ApiError ? `token test failed: ${meErr.status} ${meErr.message}` : "token test network error";
+        setError(msg);
+        setLoading(false);
+        return;
+      }
       redirectAfterLogin(result);
     } catch (error) {
       if (error instanceof ApiError) {
