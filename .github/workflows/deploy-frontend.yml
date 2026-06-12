@@ -40,6 +40,8 @@ jobs:
           NEXT_PUBLIC_BUILD_ID: ${{ steps.build-id.outputs.build-id }}
       - name: Generate build-id.json
         run: echo '{"id":"${{ steps.build-id.outputs.build-id }}"}' > apps/web/out/build-id.json
+      - name: Remove RSC payload files (iPhone serves .txt instead of .html)
+        run: find apps/web/out -type f -name "index.txt" -delete
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
