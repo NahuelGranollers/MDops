@@ -15,7 +15,7 @@ export function UpdateBanner() {
 
     async function check() {
       try {
-        const res = await fetch(`${BASE_PATH}/build-id.json`);
+        const res = await fetch(`${BASE_PATH}/build-id.json?_=${Date.now()}`);
         if (!res.ok) return;
         const data = await res.json();
         if (mounted && data.id && data.id !== BUILD_ID) {
@@ -40,7 +40,11 @@ export function UpdateBanner() {
     <div className="update-banner">
       <RefreshCw size={18} />
       <span>Hi ha una nova versió disponible</span>
-      <button className="button update-banner-btn" onClick={() => window.location.reload()}>
+      <button className="button update-banner-btn" onClick={() => {
+        const url = new URL(window.location.href);
+        url.searchParams.set("_cb", Date.now().toString());
+        window.location.href = url.toString();
+      }}>
         <RefreshCw size={16} />
         Actualitzar
       </button>
