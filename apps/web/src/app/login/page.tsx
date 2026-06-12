@@ -1,13 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { LogIn } from "lucide-react";
 import { ApiError, api, setSession } from "@/lib/api";
 import { useTranslation } from "@/lib/i18n/context";
 
 export default function LoginPage() {
-  const router = useRouter();
   const { t } = useTranslation();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -39,7 +37,8 @@ export default function LoginPage() {
         if (!active) return;
         setSession(result.accessToken, result.refreshToken);
         const isPissarra = result.user?.roles?.includes("pissarra");
-        router.replace(isPissarra ? "/planning" : "/dashboard");
+        const target = isPissarra ? "/planning" : "/events";
+        window.location.href = target;
       } catch {
         if (active) setError("");
       } finally {
@@ -54,13 +53,14 @@ export default function LoginPage() {
     return () => {
       active = false;
     };
-  }, [router]);
+  }, []);
 
   const redirectAfterLogin = useCallback((result: { accessToken: string; refreshToken: string; user?: { roles: string[] } }) => {
     setSession(result.accessToken, result.refreshToken);
     const isPissarra = result.user?.roles?.includes("pissarra");
-    router.replace(isPissarra ? "/planning" : "/dashboard");
-  }, [router]);
+    const target = isPissarra ? "/planning" : "/events";
+    window.location.href = target;
+  }, []);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
