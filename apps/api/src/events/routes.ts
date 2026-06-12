@@ -432,7 +432,7 @@ export async function eventRoutes(app: FastifyInstance) {
     const parts = fmtDay.formatToParts(now);
     const todayStr = `${parts.find((p) => p.type === "year")!.value}-${parts.find((p) => p.type === "month")!.value}-${parts.find((p) => p.type === "day")!.value}`;
     const today = new Date(todayStr + "T00:00:00+02:00");
-    const dayOfWeek = today.getUTCDay();
+    const dayOfWeek = new Date(todayStr).getUTCDay();
     const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
     const monday = new Date(today);
     monday.setUTCDate(monday.getUTCDate() - daysToMonday);
