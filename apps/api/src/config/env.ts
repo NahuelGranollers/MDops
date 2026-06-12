@@ -15,6 +15,13 @@ const booleanString = z.preprocess((value) => {
   return value;
 }, z.boolean());
 
+const safeTtl = z.preprocess((value) => {
+  if (typeof value !== "string") return "15m";
+  const trimmed = value.trim().toLowerCase();
+  if (!trimmed || trimmed === "0" || trimmed === "0s" || trimmed === "0m" || trimmed === "0h") return "15m";
+  return trimmed;
+}, z.string());
+
 const schema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PUBLIC_APP_URL: z.string().default("http://localhost:3000"),
@@ -22,7 +29,7 @@ const schema = z.object({
   DATABASE_URL: z.string().min(1),
   JWT_ACCESS_SECRET: z.string().min(24).default("dev_access_secret_change_me_please"),
   JWT_REFRESH_SECRET: z.string().min(24).default("dev_refresh_secret_change_me_please"),
-  ACCESS_TOKEN_TTL: z.string().default("15m"),
+  ACCESS_TOKEN_TTL: safeTtl.default("15m"),
   REFRESH_TOKEN_TTL_DAYS: z.coerce.number().default(30),
   CORS_ORIGIN: z.string().default("http://localhost:3000"),
   DEFAULT_TIMEZONE: z.string().default("Europe/Madrid"),
