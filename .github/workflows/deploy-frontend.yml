@@ -29,11 +29,17 @@ jobs:
       - run: pnpm install --frozen-lockfile=false
         env:
           PUPPETEER_SKIP_DOWNLOAD: true
+      - name: Generate build ID
+        id: build-id
+        run: echo "BUILD_ID=$(date +%s)" >> $GITHUB_ENV
       - run: pnpm --filter @md-ops/web build
         env:
           NEXT_PUBLIC_API_URL: https://m-dops-api.vercel.app/api
           NEXT_PUBLIC_BASE_PATH: /MDops
           STATIC_EXPORT: true
+          NEXT_PUBLIC_BUILD_ID: ${{ env.BUILD_ID }}
+      - name: Generate build-id.json
+        run: echo '{"id":"${{ env.BUILD_ID }}"}' > apps/web/out/build-id.json
       - name: Remove RSC payload files (fix GitHub Pages serving .txt instead of .html)
         run: find apps/web/out -type f -name "index.txt" -delete
       - uses: actions/configure-pages@v5

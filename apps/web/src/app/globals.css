@@ -1719,3 +1719,38 @@ h2 { font-size: clamp(20px, 1.4vw, 26px); margin-bottom: 0; letter-spacing: 0; }
   .planning-day-num { font-size: 1.4em; }
 }
 
+/* ── Update banner ── */
+.update-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  animation: slideDown 0.3s var(--ease);
+}
+.update-banner-btn {
+  background: rgba(255,255,255,.2) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255,255,255,.3) !important;
+  min-height: 34px;
+  padding: 4px 14px !important;
+  font-size: 13px !important;
+}
+.update-banner-btn:hover {
+  background: rgba(255,255,255,.3) !important;
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(0); }
+}
+
