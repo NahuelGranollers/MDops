@@ -37,7 +37,8 @@ export default function LoginPage() {
         if (!active) return;
         setSession(result.accessToken, result.refreshToken);
         const isPissarra = result.user?.roles?.includes("pissarra");
-        const target = isPissarra ? "/planning" : "/events";
+        const base = process.env.NEXT_PUBLIC_BASE_PATH || "";
+        const target = isPissarra ? `${base}/planning` : `${base}/events`;
         window.location.href = target;
       } catch {
         if (active) setError("");
@@ -58,7 +59,8 @@ export default function LoginPage() {
   const redirectAfterLogin = useCallback((result: { accessToken: string; refreshToken: string; user?: { roles: string[] } }) => {
     setSession(result.accessToken, result.refreshToken);
     const isPissarra = result.user?.roles?.includes("pissarra");
-    const target = isPissarra ? "/planning" : "/events";
+    const base = process.env.NEXT_PUBLIC_BASE_PATH || "";
+    const target = isPissarra ? `${base}/planning` : `${base}/events`;
     window.location.href = target;
   }, []);
 
