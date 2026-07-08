@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  inotify: 1.4.7
+
 importers:
 
   .:
@@ -110,7 +113,7 @@ importers:
   apps/web:
     dependencies:
       '@md-ops/shared':
-        specifier: workspace:*
+        specifier: file:../../packages/shared
         version: link:../../packages/shared
       clsx:
         specifier: ^2.1.1
