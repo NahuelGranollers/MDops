@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { api, streamUrl } from "@/lib/api";
+import { BrowserAPI } from "@/lib/browser-api";
 import { useSession } from "@/lib/use-session";
 import { useTranslation } from "@/lib/i18n/context";
 import { TimePicker } from "@/components/ui";
@@ -49,7 +50,7 @@ function AvailabilityContent() {
 
   function showFeedback(tone: "success" | "error", message: string) {
     setFeedback({ tone, message });
-    window.setTimeout(() => setFeedback(null), 2800);
+    BrowserAPI.setTimeout(() => setFeedback(null), 2800);
   }
 
   function load() {

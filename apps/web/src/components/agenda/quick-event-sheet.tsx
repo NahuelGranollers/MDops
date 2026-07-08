@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "@/lib/i18n/context";
 import { TimePicker } from "@/components/ui";
 import { calculateOvertime } from "@/lib/overtime";
+import { BrowserAPI } from "@/lib/browser-api";
 import { UserAvatar } from "@/components/user-avatar";
 import {
   activeSegment,
@@ -411,7 +412,7 @@ function PeoplePicker({
 
   function submitFreelance() {
     if (!freelanceName.trim()) return;
-    const saveRecurring = window.confirm(t("quickEvent.saveFreelancePrompt"));
+    const saveRecurring = BrowserAPI.confirm(t("quickEvent.saveFreelancePrompt"));
     onAddFreelance(freelanceName, freelancePhone, saveRecurring);
     setFreelanceName("");
     setFreelancePhone("");

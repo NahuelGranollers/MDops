@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Bell, CalendarDays, Globe, Moon, Settings, UserCheck, LogOut, MoreHorizontal, UserRound } from "lucide-react";
 import { api, clearSession, streamUrl } from "@/lib/api";
+import { BrowserAPI } from "@/lib/browser-api";
 import { useSession } from "@/lib/use-session";
 import { useTranslation } from "@/lib/i18n/context";
 import { UserAvatar } from "@/components/user-avatar";
@@ -28,9 +29,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const mobileLinks = links.filter(([href]) => href !== "/settings");
 
   function applyTheme(nextTheme: "light" | "dark") {
-    document.documentElement.classList.toggle("dark", nextTheme === "dark");
+    BrowserAPI.setDocumentClass("dark", nextTheme === "dark");
     setTheme(nextTheme);
-    if (user) window.localStorage.setItem(`md-ops-theme:${user.id}`, nextTheme);
+    if (user) BrowserAPI.setLocalStorage(`md-ops-theme:${user.id}`, nextTheme);
   }
 
   useEffect(() => {
@@ -39,9 +40,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       return;
     }
     if (user) {
-      const redirect = window.sessionStorage.getItem("md-ops-redirect");
+      const redirect = BrowserAPI.getSessionStorage("md-ops-redirect");
       if (redirect) {
-        window.sessionStorage.removeItem("md-ops-redirect");
+        BrowserAPI.removeSessionStorage("md-ops-redirect");
         const cleanPath = redirect.split("?")[0].replace(/\/+$/, "") + "/";
         if (cleanPath !== pathname) router.replace(cleanPath);
       }
@@ -50,19 +51,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!user) return;
-    const savedTheme = window.localStorage.getItem(`md-ops-theme:${user.id}`);
+    const savedTheme = BrowserAPI.getLocalStorage(`md-ops-theme:${user.id}`);
     const nextTheme = savedTheme === "dark" || savedTheme === "light" ? savedTheme : "light";
-    document.documentElement.classList.toggle("dark", nextTheme === "dark");
+    BrowserAPI.setDocumentClass("dark", nextTheme === "dark");
     setTheme(nextTheme);
   }, [user]);
 
   useEffect(() => {
     if (!user) return;
     if (user.notificationEmail) return;
-    const dismissed = window.localStorage.getItem(`md-ops-email-popup-dismissed:${user.id}`);
+    const dismissed = BrowserAPI.getLocalStorage(`md-ops-email-popup-dismissed:${user.id}`);
     if (dismissed) return;
-    const timer = window.setTimeout(() => setShowEmailPopup(true), 1500);
-    return () => window.clearTimeout(timer);
+    const timer = BrowserAPI.setTimeout(() => setShowEmailPopup(true), 1500);
+    return () => BrowserAPI.clearTimeout(timer);
   }, [user]);
 
   useEffect(() => {

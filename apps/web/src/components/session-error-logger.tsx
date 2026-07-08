@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { trackClientEvent } from "@/lib/api";
+import { BrowserAPI } from "@/lib/browser-api";
 
 export function SessionErrorLogger() {
   useEffect(() => {
@@ -23,11 +24,11 @@ export function SessionErrorLogger() {
       });
     }
 
-    window.addEventListener("error", onError);
-    window.addEventListener("unhandledrejection", onUnhandledRejection);
+    BrowserAPI.addEventListener("error", onError);
+    BrowserAPI.addEventListener("unhandledrejection", onUnhandledRejection);
     return () => {
-      window.removeEventListener("error", onError);
-      window.removeEventListener("unhandledrejection", onUnhandledRejection);
+      BrowserAPI.removeEventListener("error", onError);
+      BrowserAPI.removeEventListener("unhandledrejection", onUnhandledRejection);
     };
   }, []);
 

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight, Plus, Search } from "lucide-react";
 import { ApiError, api, streamUrl, trackClientEvent } from "@/lib/api";
+import { BrowserAPI } from "@/lib/browser-api";
 import { useSession } from "@/lib/use-session";
 import { useTranslation } from "@/lib/i18n/context";
 import { ConfirmDialog } from "@/components/confirm-dialog";
@@ -96,7 +97,7 @@ export function OpsAgenda() {
   function toast(tone: Toast["tone"], message: string) {
     const id = Date.now();
     setToasts((current) => [...current, { id, tone, message }]);
-    window.setTimeout(() => setToasts((current) => current.filter((item) => item.id !== id)), 3200);
+    BrowserAPI.setTimeout(() => setToasts((current) => current.filter((item) => item.id !== id)), 3200);
   }
 
   useEffect(() => {
@@ -108,11 +109,11 @@ export function OpsAgenda() {
       }
       if (event.key === "/" && !["INPUT", "TEXTAREA", "SELECT"].includes((event.target as HTMLElement).tagName)) {
         event.preventDefault();
-        document.getElementById("quick-search")?.focus();
+        BrowserAPI.getElementById("quick-search")?.focus();
       }
     }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    BrowserAPI.addEventListener("keydown", onKey);
+    return () => BrowserAPI.removeEventListener("keydown", onKey);
   }, [anchor, isAdmin]);
 
   const visibleDays = useMemo(() => {

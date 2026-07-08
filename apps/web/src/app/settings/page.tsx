@@ -5,6 +5,7 @@ import { KeyRound, Mail, UserPlus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { api, clearSession } from "@/lib/api";
+import { BrowserAPI } from "@/lib/browser-api";
 import { useSession } from "@/lib/use-session";
 import { useTranslation } from "@/lib/i18n/context";
 import { UserAvatar } from "@/components/user-avatar";
@@ -76,7 +77,7 @@ export default function SettingsPage() {
 
   function flash(message: string) {
     setSaved(message);
-    window.setTimeout(() => setSaved(""), 2500);
+    BrowserAPI.setTimeout(() => setSaved(""), 2500);
   }
 
   async function load() {
@@ -136,7 +137,7 @@ export default function SettingsPage() {
       setNewPassword("");
       setConfirmPassword("");
       flash(t("settings.passwordChanged"));
-      window.setTimeout(() => {
+      BrowserAPI.setTimeout(() => {
         clearSession();
         router.replace("/login");
       }, 1000);
@@ -199,7 +200,7 @@ export default function SettingsPage() {
   }
 
   async function deleteUser(user: UserRow) {
-    if (!window.confirm(t("settings.deleteConfirm", { name: user.name }))) return;
+    if (!BrowserAPI.confirm(t("settings.deleteConfirm", { name: user.name }))) return;
     await api(`/users/${user.id}`, { method: "DELETE" });
     await load();
     flash(t("settings.userDeleted"));

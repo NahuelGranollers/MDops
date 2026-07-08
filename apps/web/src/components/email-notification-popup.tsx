@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Mail, X } from "lucide-react";
 import { useTranslation } from "@/lib/i18n/context";
 import { api, type SessionUser } from "@/lib/api";
+import { BrowserAPI } from "@/lib/browser-api";
 
 type Props = {
   user: SessionUser;
@@ -17,7 +18,7 @@ export function EmailNotificationPopup({ user, onClose }: Props) {
   const [error, setError] = useState("");
 
   function dismiss() {
-    window.localStorage.setItem(`md-ops-email-popup-dismissed:${user.id}`, "true");
+    BrowserAPI.setLocalStorage(`md-ops-email-popup-dismissed:${user.id}`, "true");
     onClose();
   }
 
@@ -34,7 +35,7 @@ export function EmailNotificationPopup({ user, onClose }: Props) {
         method: "PUT",
         body: JSON.stringify({ notificationEmail: email.trim() })
       });
-      window.localStorage.setItem(`md-ops-email-popup-dismissed:${user.id}`, "true");
+      BrowserAPI.setLocalStorage(`md-ops-email-popup-dismissed:${user.id}`, "true");
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : t("emailPopup.saveError"));

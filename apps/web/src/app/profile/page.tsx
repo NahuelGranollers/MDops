@@ -5,6 +5,7 @@ import { KeyRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { api, clearSession } from "@/lib/api";
+import { BrowserAPI } from "@/lib/browser-api";
 import { useSession } from "@/lib/use-session";
 import { useTranslation } from "@/lib/i18n/context";
 import { UserAvatar } from "@/components/user-avatar";
@@ -54,7 +55,7 @@ export default function ProfilePage() {
       setNewPassword("");
       setConfirmPassword("");
       showFeedback("success", t("profile.passwordChanged"));
-      window.setTimeout(() => {
+      BrowserAPI.setTimeout(() => {
         clearSession();
         router.replace("/login");
       }, 1200);

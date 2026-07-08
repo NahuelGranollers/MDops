@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
 import { translations, type Locale } from "./translations";
+import { BrowserAPI } from "../browser-api";
 
 type I18nContext = {
   locale: Locale;
@@ -25,13 +26,13 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>("ca");
 
   useEffect(() => {
-    const saved = window.localStorage.getItem("md-ops-locale") as Locale | null;
+    const saved = BrowserAPI.getLocalStorage("md-ops-locale") as Locale | null;
     if (saved === "es" || saved === "ca") setLocaleState(saved);
   }, []);
 
   const setLocale = useCallback((next: Locale) => {
     setLocaleState(next);
-    window.localStorage.setItem("md-ops-locale", next);
+    BrowserAPI.setLocalStorage("md-ops-locale", next);
   }, []);
 
   const t = useCallback((key: string, params?: Record<string, string | number>) => {

@@ -1,5 +1,7 @@
 "use client";
 
+import { BrowserAPI } from "./browser-api";
+
 export type SessionUser = {
   id: string;
   tenantId: string;
@@ -17,8 +19,8 @@ const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "";
 
 function apiOrigin() {
   if (API_URL.startsWith("http")) return API_URL.replace(/\/api\/?$/, "");
-  if (typeof window !== "undefined") return window.location.origin;
-  return "";
+  const origin = BrowserAPI.getOrigin();
+  return origin || "";
 }
 
 export class ApiError extends Error {
@@ -34,19 +36,18 @@ export class ApiError extends Error {
 }
 
 export function getAccessToken() {
-  if (typeof window === "undefined") return null;
-  return window.localStorage.getItem("accessToken");
+  return BrowserAPI.getLocalStorage("accessToken");
 }
 
 export function setSession(accessToken: string, refreshToken: string) {
-  window.localStorage.setItem("accessToken", accessToken);
-  window.localStorage.setItem("refreshToken", refreshToken);
+  BrowserAPI.setLocalStorage("accessToken", accessToken);
+  BrowserAPI.setLocalStorage("refreshToken", refreshToken);
 }
 
 export function clearSession() {
-  window.localStorage.removeItem("accessToken");
-  window.localStorage.removeItem("refreshToken");
-  window.localStorage.removeItem("md-ops-remember-token");
+  BrowserAPI.removeLocalStorage("accessToken");
+  BrowserAPI.removeLocalStorage("refreshToken");
+  BrowserAPI.removeLocalStorage("md-ops-remember-token");
 }
 
 function sendClientLog(entry: {
@@ -58,7 +59,7 @@ function sendClientLog(entry: {
   durationMs?: number;
   data?: unknown;
 }) {
-  if (typeof window === "undefined" || entry.path?.startsWith("/session-log")) return;
+  if (!BrowserAPI.isClient() || entry.path?.startsWith("/session-log")) return;
   const token = getAccessToken();
   const headers = new Headers({ "Content-Type": "application/json" });
   if (token) headers.set("Authorization", `Bearer ${token}`);
@@ -80,16 +81,16 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token = getAccessToken();
   if (token) headers.set("Authorization", `Bearer ${token}`);
   const method = (init.method ?? "GET").toUpperCase();
-  const startedAt = typeof performance !== "undefined" ? performance.now() : Date.now();
+  const startedAt = BrowserAPI.getPerformanceTime();
   let response: Response;
   try {
     response = await fetch(`${API_URL}${path}`, { ...init, headers });
   } catch (error) {
-    const durationMs = Math.round((typeof performance !== "undefined" ? performance.now() : Date.now()) - startedAt);
+    const durationMs = Math.round(BrowserAPI.getPerformanceTime() - startedAt);
     sendClientLog({ type: "api_network_error", path, method, durationMs, message: error instanceof Error ? error.message : "Error de red" });
     throw error;
   }
-  const durationMs = Math.round((typeof performance !== "undefined" ? performance.now() : Date.now()) - startedAt);
+  const durationMs = Math.round(BrowserAPI.getPerformanceTime() - startedAt);
   sendClientLog({ type: "api_request", path, method, statusCode: response.status, durationMs });
   if (!response.ok) {
     const text = await response.text();
@@ -101,10 +102,11 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
     }
     const message = payload?.message || text || `Error ${response.status}`;
     sendClientLog({ type: "api_error", path, method, statusCode: response.status, durationMs, message, data: payload });
-    if (response.status === 401 && typeof window !== "undefined" && !path.startsWith("/auth/login")) {
+    if (response.status === 401 && !path.startsWith("/auth/login")) {
       clearSession();
       const loginPath = `${BASE_PATH}/login/`;
-      if (window.location.pathname !== loginPath) window.location.assign(loginPath);
+      const currentPath = BrowserAPI.getPathname();
+      if (currentPath !== loginPath) BrowserAPI.navigate(loginPath);
     }
     throw new ApiError(message, response.status, payload);
   }

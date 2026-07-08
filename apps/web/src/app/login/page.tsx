@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { LogIn } from "lucide-react";
 import { ApiError, api, setSession } from "@/lib/api";
+import { BrowserAPI } from "@/lib/browser-api";
 import { useTranslation } from "@/lib/i18n/context";
 
 export default function LoginPage() {
@@ -19,7 +20,7 @@ export default function LoginPage() {
 
     async function runAutoLogin() {
       try {
-        const lastUser = window.localStorage.getItem("md-ops-last-user");
+        const lastUser = BrowserAPI.getLocalStorage("md-ops-last-user");
         if (!lastUser) {
           if (active) setAutoLoginLoading(false);
           return;
@@ -39,7 +40,7 @@ export default function LoginPage() {
         const isPissarra = result.user?.roles?.includes("pissarra");
         const base = process.env.NEXT_PUBLIC_BASE_PATH || "";
         const target = isPissarra ? `${base}/planning` : `${base}/events`;
-        window.location.href = target;
+        BrowserAPI.navigate(target);
       } catch {
         if (active) setError("");
       } finally {
@@ -61,7 +62,7 @@ export default function LoginPage() {
     const isPissarra = result.user?.roles?.includes("pissarra");
     const base = process.env.NEXT_PUBLIC_BASE_PATH || "";
     const target = isPissarra ? `${base}/planning` : `${base}/events`;
-    window.location.href = target;
+    BrowserAPI.navigate(target);
   }, []);
 
   async function submit(event: React.FormEvent) {
@@ -70,7 +71,7 @@ export default function LoginPage() {
     setError("");
     try {
       const result = await api<{ accessToken: string; refreshToken: string; user?: { roles: string[] } }>("/auth/login", { method: "POST", body: JSON.stringify({ identifier, password }) });
-      window.localStorage.setItem("md-ops-last-user", identifier);
+      BrowserAPI.setLocalStorage("md-ops-last-user", identifier);
       redirectAfterLogin(result);
     } catch (error) {
       if (error instanceof ApiError) {
