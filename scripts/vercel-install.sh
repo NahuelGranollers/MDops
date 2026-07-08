@@ -15,6 +15,6 @@ fi
 echo "Found workspace root: $CUR"
 cd "$CUR"
 
-# Ensure pnpm@10 is active and install workspace deps (include dev for prisma/build steps)
-corepack prepare pnpm@10 --activate
+# Ensure pnpm@9.15.4 is active and install workspace deps (include dev for prisma/build steps)
+corepack prepare pnpm@9.15.4 --activate
 pnpm -w install --include=dev --no-optional

@@ -1,0 +1,36 @@
+Legend: production dependency, optional only, dev only
+
+md-ops@0.1.0 C:\Users\nahue\copilot-worktrees\md-ops\nahuelgranollers-animated-parakeet (PRIVATE)
+
+dependencies:
+@supabase/ssr 0.12.0
+├─┬ @supabase/supabase-js 2.108.1 peer
+│ ├─┬ @supabase/auth-js 2.108.1
+│ │ └── tslib 2.8.1
+│ ├─┬ @supabase/functions-js 2.108.1
+│ │ └── tslib 2.8.1
+│ ├─┬ @supabase/postgrest-js 2.108.1
+│ │ └── tslib 2.8.1
+│ ├─┬ @supabase/realtime-js 2.108.1
+│ │ ├── @supabase/phoenix 0.4.2
+│ │ └── tslib 2.8.1
+│ └─┬ @supabase/storage-js 2.108.1
+│   ├── iceberg-js 0.8.1
+│   └── tslib 2.8.1
+└── cookie 1.1.1
+@supabase/supabase-js 2.108.1
+├─┬ @supabase/auth-js 2.108.1
+│ └── tslib 2.8.1
+├─┬ @supabase/functions-js 2.108.1
+│ └── tslib 2.8.1
+├─┬ @supabase/postgrest-js 2.108.1
+│ └── tslib 2.8.1
+├─┬ @supabase/realtime-js 2.108.1
+│ ├── @supabase/phoenix 0.4.2
+│ └── tslib 2.8.1
+└─┬ @supabase/storage-js 2.108.1
+  ├── iceberg-js 0.8.1
+  └── tslib 2.8.1
+
+devDependencies:
+typescript 5.9.3
