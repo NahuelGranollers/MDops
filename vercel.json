@@ -1,7 +1,0 @@
-{
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": "nextjs",
-  "installCommand": "export npm_config_node_gyp=/bin/true && pnpm install --no-optional",
-  "buildCommand": "pnpm --filter @md-ops/shared build && pnpm --filter @md-ops/web build",
-  "outputDirectory": "apps/web/.next"
-}
