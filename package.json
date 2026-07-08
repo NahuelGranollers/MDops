@@ -25,5 +25,10 @@
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.108.1"
+  },
+  "pnpm": {
+    "overrides": {
+      "inotify": "1.4.7"
+    }
   }
 }
