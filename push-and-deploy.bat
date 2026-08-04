@@ -1,11 +1,12 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
 
-rem -- Non-interactive support: /y or --yes, or env MDO_NONINTERACTIVE=1
-set "NONINTERACTIVE=0"
-if /i "%1"=="/y" set "NONINTERACTIVE=1"
-if /i "%1"=="--yes" set "NONINTERACTIVE=1"
-if defined MDO_NONINTERACTIVE set "NONINTERACTIVE=%MDO_NONINTERACTIVE%"
+rem -- Non-interactive by default to avoid prompts. Use /i or set MDO_FORCE_INTERACTIVE=1 to allow prompts.
+set "NONINTERACTIVE=1"
+if /i "%1"=="/i" set "NONINTERACTIVE=0"
+if defined MDO_FORCE_INTERACTIVE set "NONINTERACTIVE=%MDO_FORCE_INTERACTIVE%"
+
+echo [DEBUG] NONINTERACTIVE=%NONINTERACTIVE% MDO_NONINTERACTIVE=%MDO_NONINTERACTIVE%
 
 cd /d "%~dp0"
 title MD Ops - Push y Deploy
@@ -52,16 +53,35 @@ if "%CURRENT_BRANCH%"=="" (
 
 set "PUSH_TARGET=main"
 if "%CURRENT_BRANCH%"=="" (
-  echo AVISO: no se ha podido detectar la rama actual.
-  echo Se puede continuar enviando el commit actual a origin/main.
-  set /p "CONTINUE_HEAD=Continuar con push HEAD:main? (s/N): "
-  if /i not "!CONTINUE_HEAD!"=="s" if /i not "!CONTINUE_HEAD!"=="si" if /i not "!CONTINUE_HEAD!"=="y" if /i not "!CONTINUE_HEAD!"=="yes" goto :error
-  set "PUSH_TARGET=HEAD:main"
+  if "%NONINTERACTIVE%"=="1" (
+    echo AVISO: no se ha podido detectar la rama actual. Modo no interactivo: se usara HEAD:main.
+    set "PUSH_TARGET=HEAD:main"
+  ) else (
+    echo AVISO: no se ha podido detectar la rama actual.
+    echo Se puede continuar enviando el commit actual a origin/main.
+    set /p "CONTINUE_HEAD=Continuar con push HEAD:main? (s/N): "
+    if /i not "!CONTINUE_HEAD!"=="s" if /i not "!CONTINUE_HEAD!"=="si" if /i not "!CONTINUE_HEAD!"=="y" if /i not "!CONTINUE_HEAD!"=="yes" goto :error
+    set "PUSH_TARGET=HEAD:main"
+  )
 ) else if /i not "%CURRENT_BRANCH%"=="main" (
-  echo ERROR: estas en la rama "%CURRENT_BRANCH%", no en "main".
-  echo Cambia a main antes de desplegar:
-  echo   git switch main
-  goto :error
+  if "%NONINTERACTIVE%"=="1" (
+    if defined MDO_ALLOW_BRANCH (
+      echo Modo no interactivo: permitiendo push desde la rama actual "%CURRENT_BRANCH%".
+      set "PUSH_TARGET=%CURRENT_BRANCH%"
+    ) else if defined MDO_FORCE_PUSH (
+      echo Modo no interactivo: forzando push a origin/main desde HEAD.
+      set "PUSH_TARGET=HEAD:main"
+    ) else (
+      echo ERROR: estas en la rama "%CURRENT_BRANCH%", no en "main".
+      echo En modo no interactivo exporta MDO_ALLOW_BRANCH=1 para permitir o MDO_FORCE_PUSH=1 para forzar push a main.
+      goto :error
+    )
+  ) else (
+    echo ERROR: estas en la rama "%CURRENT_BRANCH%", no en "main".
+    echo Cambia a main antes de desplegar:
+    echo   git switch main
+    goto :error
+  )
 )
 
 set "GIT_USER_NAME="
@@ -70,24 +90,52 @@ for /f "delims=" %%n in ('%GIT_SAFE% config user.name 2^>nul') do set "GIT_USER_
 for /f "delims=" %%e in ('%GIT_SAFE% config user.email 2^>nul') do set "GIT_USER_EMAIL=%%e"
 
 if "%GIT_USER_NAME%"=="" (
-  echo.
-  set /p "GIT_USER_NAME=Nombre para los commits: "
-  if "!GIT_USER_NAME!"=="" goto :error
-  %GIT_SAFE% config user.name "!GIT_USER_NAME!"
-  if errorlevel 1 goto :error
+  if "%NONINTERACTIVE%"=="1" (
+    if defined MDO_GIT_USER_NAME (
+      set "GIT_USER_NAME=%MDO_GIT_USER_NAME%"
+    ) else (
+      set "GIT_USER_NAME=md-ops"
+    )
+    %GIT_SAFE% config user.name "!GIT_USER_NAME!"
+    if errorlevel 1 goto :error
+  ) else (
+    echo.
+    set /p "GIT_USER_NAME=Nombre para los commits: "
+    if "!GIT_USER_NAME!"=="" goto :error
+    %GIT_SAFE% config user.name "!GIT_USER_NAME!"
+    if errorlevel 1 goto :error
+  )
 )
 
 if "%GIT_USER_EMAIL%"=="" (
-  echo.
-  set /p "GIT_USER_EMAIL=Email para los commits: "
-  if "!GIT_USER_EMAIL!"=="" goto :error
-  %GIT_SAFE% config user.email "!GIT_USER_EMAIL!"
-  if errorlevel 1 goto :error
+  if "%NONINTERACTIVE%"=="1" (
+    if defined MDO_GIT_USER_EMAIL (
+      set "GIT_USER_EMAIL=%MDO_GIT_USER_EMAIL%"
+    ) else (
+      set "GIT_USER_EMAIL=no-reply@example.com"
+    )
+    %GIT_SAFE% config user.email "!GIT_USER_EMAIL!"
+    if errorlevel 1 goto :error
+  ) else (
+    echo.
+    set /p "GIT_USER_EMAIL=Email para los commits: "
+    if "!GIT_USER_EMAIL!"=="" goto :error
+    %GIT_SAFE% config user.email "!GIT_USER_EMAIL!"
+    if errorlevel 1 goto :error
+  )
 )
 
-set "COMMIT_MSG="
-set /p "COMMIT_MSG=Mensaje de commit [deploy update]: "
-if "%COMMIT_MSG%"=="" set "COMMIT_MSG=deploy update"
+if "%NONINTERACTIVE%"=="1" (
+  if defined MDO_COMMIT_MSG (
+    set "COMMIT_MSG=%MDO_COMMIT_MSG%"
+  ) else (
+    set "COMMIT_MSG=deploy update"
+  )
+) else (
+  set "COMMIT_MSG="
+  set /p "COMMIT_MSG=Mensaje de commit [deploy update]: "
+  if "%COMMIT_MSG%"=="" set "COMMIT_MSG=deploy update"
+)
 
 echo.
 echo == Estado actual ==
@@ -136,8 +184,10 @@ echo.
 rem -- Comprobacion rapida API (dominio configurable)
 set "API_URL=https://m-dops-api.vercel.app"
 if defined MDO_API_URL set "API_URL=%MDO_API_URL%"
-set /p "CUSTOM_API_URL=API URL para comprobaciones [%API_URL%]: "
-if not "%CUSTOM_API_URL%"=="" set "API_URL=%CUSTOM_API_URL%"
+if "%NONINTERACTIVE%"=="0" (
+  set /p "CUSTOM_API_URL=API URL para comprobaciones [%API_URL%]: "
+  if not "%CUSTOM_API_URL%"=="" set "API_URL=%CUSTOM_API_URL%"
+)
 
 echo API: %API_URL%
 echo.
@@ -146,7 +196,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command "try { $r=Invoke-WebReque
 powershell -NoProfile -ExecutionPolicy Bypass -Command "try { $r=Invoke-WebRequest -Uri '%API_URL%/bootstrap' -UseBasicParsing -TimeoutSec 20; Write-Host ('Bootstrap root: ' + $r.StatusCode + ' ' + $r.Content) } catch { Write-Host ('Bootstrap root ERROR: ' + $_.Exception.Message) }"
 powershell -NoProfile -ExecutionPolicy Bypass -Command "try { $r=Invoke-WebRequest -Uri '%API_URL%/api/auth/bootstrap-status' -UseBasicParsing -TimeoutSec 20; Write-Host ('Bootstrap API: ' + $r.StatusCode + ' ' + $r.Content) } catch { Write-Host ('Bootstrap API ERROR: ' + $_.Exception.Message) }"
 echo.
-pause
+if "%NONINTERACTIVE%"=="0" (
+  pause
+)
 exit /b 0
 
 :error
