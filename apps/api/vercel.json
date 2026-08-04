@@ -4,7 +4,7 @@
   "installCommand": "cd ../.. && corepack enable && pnpm install",
   "buildCommand": "cd ../.. && pnpm --filter @md-ops/shared build && pnpm --filter @md-ops/api build",
   "functions": {
-    "api/index.ts": {
+    "api/**/*.ts": {
       "runtime": "@vercel/node@5.9.5"
     }
   },
