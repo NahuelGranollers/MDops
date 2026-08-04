@@ -9,10 +9,13 @@ function buildJsonResponse(payload: Record<string, unknown>, statusCode = 200) {
 }
 
 export default async function handler(req: any, res: any) {
-  const url = new URL(req.url ?? "/", `http://${req.headers?.host ?? "localhost"}`);
+  const rawUrl = req.url ?? "/";
+  const normalizedPath = rawUrl.split("?")[0].split("#")[0];
+  const url = new URL(normalizedPath, `http://${req.headers?.host ?? "localhost"}`);
+  const pathname = url.pathname.replace(/\/+$/, "") || "/";
 
-  if (HEALTH_PATHS.has(url.pathname)) {
-    const response = url.pathname.endsWith("bootstrap") || url.pathname === "/bootstrap" || url.pathname === "/api/bootstrap"
+  if (HEALTH_PATHS.has(pathname)) {
+    const response = pathname === "/bootstrap" || pathname === "/api/bootstrap" || pathname.endsWith("/bootstrap")
       ? buildJsonResponse({ bootstrapped: true, message: "API cargada exitosamente" })
       : buildJsonResponse({ ok: true, service: "api" });
 
