@@ -1,0 +1,19 @@
+npm warn Unknown project config "symlink". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+> [debug] [2026-08-04T09:16:24.959Z] Found config in file "C:\Users\Usuario\Documents\md-ops\vercel.json"
+Vercel CLI 58.5.1 (Node.js 24.15.0)
+> [debug] [2026-08-04T09:16:24.969Z] Agent/TTY/nonInteractive: isAgent=true agentName=github_copilot_vscode_agent stdin.isTTY=true --non-interactive=false explicitFalse=false => nonInteractive=false
+> [debug] [2026-08-04T09:16:24.973Z] user supplied a possible target for deployment or an extension
+> [debug] [2026-08-04T09:16:25.032Z] failed to find extension command with name "vercel---prod"
+WARNING! `--confirm` is deprecated, please use `--yes` instead
+> [debug] [2026-08-04T09:16:25.114Z] Setting target to production
+> [debug] [2026-08-04T09:16:25.157Z] Spinner invoked (Retrieving project…) with a 1000ms delay
+> [debug] [2026-08-04T09:16:25.159Z] Valid access token, skipping token refresh.
+> [debug] [2026-08-04T09:16:25.177Z] #1 → GET https://api.vercel.com/teams/team_N7HfUFk917h7VZCmzpo8NCf7
+> [debug] [2026-08-04T09:16:25.178Z] #2 → GET https://api.vercel.com/v9/projects/prj_kalcKYG3TeexUXruLG8JdUG5FFwG?teamId=team_N7HfUFk917h7VZCmzpo8NCf7
+> [debug] [2026-08-04T09:16:25.770Z] #1 ← 200 OK: sfo1::hk5sd-1785834985475-f42514b6cf84 [593ms]
+> [debug] [2026-08-04T09:16:25.837Z] #2 ← 200 OK: sfo1::cd29d-1785834985527-34f65fd0a294 [659ms]
+Error: The provided path “~\Documents\md-ops\apps\api\apps\api” does not exist. To change your Project Settings, go to https://vercel.com/nahuels-projects-b5553abb/m-dops-api/settings
+> [debug] [2026-08-04T09:16:26.400Z] Vercel CLI 58.5.1 (Node.js 24.15.0)
+
+> [debug] [2026-08-04T09:16:27.131Z] Telemetry event tracked
+> [debug] [2026-08-04T09:16:27.201Z] Telemetry subprocess exited with code 0

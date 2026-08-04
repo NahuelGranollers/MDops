@@ -1,0 +1,23 @@
+npm warn Unknown project config "symlink". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+> [debug] [2026-08-04T09:15:50.247Z] Found config in file "C:\Users\Usuario\Documents\md-ops\vercel.json"
+Vercel CLI 58.5.1 (Node.js 24.15.0)
+> [debug] [2026-08-04T09:15:50.257Z] Agent/TTY/nonInteractive: isAgent=true agentName=github_copilot_vscode_agent stdin.isTTY=true --non-interactive=false explicitFalse=false => nonInteractive=false
+WARNING! Did you mean to deploy the subdirectory "logs"? Use `vc --cwd logs` instead.
+> [debug] [2026-08-04T09:15:50.258Z] user supplied known subcommand: "logs"
+> [debug] [2026-08-04T09:15:50.507Z] Valid access token, skipping token refresh.
+> [debug] [2026-08-04T09:15:50.520Z] #1 → GET https://api.vercel.com/v2/user
+> [debug] [2026-08-04T09:15:51.126Z] #1 ← 200 OK: sfo1::5pjzt-1785834950861-cfd9195d56db [606ms]
+> [debug] [2026-08-04T09:15:51.132Z] #2 → GET https://api.vercel.com/teams/team_N7HfUFk917h7VZCmzpo8NCf7?teamId=team_N7HfUFk917h7VZCmzpo8NCf7
+> [debug] [2026-08-04T09:15:51.694Z] #2 ← 200 OK: sfo1::b26nx-1785834951418-c9bf22c54fcf [562ms]
+> [debug] [2026-08-04T09:15:51.697Z] Spinner invoked (Resolving deployment "m-dops-ekq5goz78-nahuels-projects-b5553abb.vercel.app") with a 1000ms delay
+> [debug] [2026-08-04T09:15:51.698Z] #3 → GET https://api.vercel.com/v13/deployments/m-dops-ekq5goz78-nahuels-projects-b5553abb.vercel.app?teamId=team_N7HfUFk917h7VZCmzpo8NCf7
+> [debug] [2026-08-04T09:15:52.109Z] #3 ← 200 OK: sfo1::dhq74-1785834951635-6e3803c1679d [411ms]
+> [debug] [2026-08-04T09:15:52.113Z] Spinner invoked (Fetching project "prj_kalcKYG3TeexUXruLG8JdUG5FFwG") with a 1000ms delay
+> [debug] [2026-08-04T09:15:52.115Z] #4 → GET https://api.vercel.com/v9/projects/prj_kalcKYG3TeexUXruLG8JdUG5FFwG?teamId=team_N7HfUFk917h7VZCmzpo8NCf7
+> [debug] [2026-08-04T09:15:52.361Z] #4 ← 200 OK: sfo1::z69x5-1785834952052-4a1bae54440a [246ms]
+Error: Logs are unavailable because deployment dpl_62XVaSS6wZWEXRdGK5RAWRY4KVs6 never reached READY and ended in ERROR.
+Run `vercel inspect https://m-dops-ekq5goz78-nahuels-projects-b5553abb.vercel.app` for deployment details.
+> [debug] [2026-08-04T09:15:52.825Z] Vercel CLI 58.5.1 (Node.js 24.15.0)
+
+> [debug] [2026-08-04T09:15:53.456Z] Telemetry event tracked
+> [debug] [2026-08-04T09:15:53.518Z] Telemetry subprocess exited with code 0

@@ -1,0 +1,47 @@
+npm warn Unknown project config "symlink". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+> [debug] [2026-08-04T09:16:10.616Z] Found config in file "C:\Users\Usuario\Documents\md-ops\vercel.json"
+Vercel CLI 58.5.1 (Node.js 24.15.0)
+> [debug] [2026-08-04T09:16:10.628Z] Agent/TTY/nonInteractive: isAgent=true agentName=github_copilot_vscode_agent stdin.isTTY=true --non-interactive=false explicitFalse=false => nonInteractive=false
+> [debug] [2026-08-04T09:16:10.629Z] user supplied known subcommand: "inspect"
+> [debug] [2026-08-04T09:16:10.898Z] Valid access token, skipping token refresh.
+> [debug] [2026-08-04T09:16:10.914Z] #1 → GET https://api.vercel.com/v2/user
+> [debug] [2026-08-04T09:16:11.531Z] #1 ← 200 OK: sfo1::zlprb-1785834971259-8ecb2267b8a7 [617ms]
+> [debug] [2026-08-04T09:16:11.541Z] #2 → GET https://api.vercel.com/teams/team_N7HfUFk917h7VZCmzpo8NCf7?teamId=team_N7HfUFk917h7VZCmzpo8NCf7
+> [debug] [2026-08-04T09:16:12.112Z] #2 ← 200 OK: sfo1::xw8kr-1785834971831-5110bf324925 [571ms]
+> [debug] [2026-08-04T09:16:12.114Z] Spinner invoked (Fetching deployment "m-dops-ekq5goz78-nahuels-projects-b5553abb.vercel.app" in nahuels-projects-b5553abb) with a 300ms delay
+> [debug] [2026-08-04T09:16:12.115Z] #3 → GET https://api.vercel.com/v13/deployments/m-dops-ekq5goz78-nahuels-projects-b5553abb.vercel.app?teamId=team_N7HfUFk917h7VZCmzpo8NCf7
+> [debug] [2026-08-04T09:16:12.546Z] #3 ← 200 OK: sfo1::q797b-1785834972052-8a9c6aec2d3c [431ms]
+> Fetched deployment "m-dops-ekq5goz78-nahuels-projects-b5553abb.vercel.app" in nahuels-projects-b5553abb [437ms]
+> [debug] [2026-08-04T09:16:12.553Z] #4 → GET https://api.vercel.com/v11/deployments/dpl_62XVaSS6wZWEXRdGK5RAWRY4KVs6/builds?teamId=team_N7HfUFk917h7VZCmzpo8NCf7
+> [debug] [2026-08-04T09:16:12.946Z] #4 ← 200 OK: sfo1::hvt9c-1785834972490-8e3b79384045 [393ms]
+
+  General
+
+    id		dpl_62XVaSS6wZWEXRdGK5RAWRY4KVs6
+    name	m-dops-api
+    target	production
+    status	● Error
+    url		https://m-dops-ekq5goz78-nahuels-projects-b5553abb.vercel.app
+    created	Tue Aug 04 2026 11:15:36 GMT+0200 (hora de verano de Europa central) [37s ago]
+
+
+  Aliases
+
+    ╶ https://m-dops-api-nahuels-projects-b5553abb.vercel.app
+    ╶ https://m-dops-api-nahuelgranollers-1879-nahuels-projects-b5553abb.vercel.app
+    
+
+  Builds
+
+    ╶ .        [0ms]
+    
+
+  Routes
+
+    ╶ ^(?:/(.*))$      ->      /src/server.ts      
+    ╶ filesystem
+
+> [debug] [2026-08-04T09:16:13.423Z] Vercel CLI 58.5.1 (Node.js 24.15.0)
+
+> [debug] [2026-08-04T09:16:14.063Z] Telemetry event tracked
+> [debug] [2026-08-04T09:16:14.135Z] Telemetry subprocess exited with code 0

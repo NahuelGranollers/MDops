@@ -1,16 +1,17 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "version": 2,
   "installCommand": "cd ../.. && corepack enable && pnpm install",
   "buildCommand": "cd ../.. && pnpm --filter @md-ops/shared build && pnpm --filter @md-ops/api build",
   "functions": {
     "src/server.ts": {
-      "runtime": "@vercel/node@5"
+      "runtime": "@vercel/node@5.9.5"
     }
   },
-  "rewrites": [
+  "routes": [
     {
-      "source": "/(.*)",
-      "destination": "/src/server.ts"
+      "src": "/(.*)",
+      "dest": "/src/server.ts"
     }
   ]
 }

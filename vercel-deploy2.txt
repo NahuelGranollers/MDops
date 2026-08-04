@@ -1,0 +1,107 @@
+npm warn Unknown project config "symlink". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+> [debug] [2026-08-04T09:15:29.853Z] Found config in file "C:\Users\Usuario\Documents\md-ops\vercel.json"
+Vercel CLI 58.5.1 (Node.js 24.15.0)
+> [debug] [2026-08-04T09:15:29.865Z] Agent/TTY/nonInteractive: isAgent=true agentName=github_copilot_vscode_agent stdin.isTTY=true --non-interactive=false explicitFalse=false => nonInteractive=false
+> [debug] [2026-08-04T09:15:29.866Z] user supplied a possible target for deployment or an extension
+> [debug] [2026-08-04T09:15:29.919Z] failed to find extension command with name "vercel---prod"
+WARNING! `--confirm` is deprecated, please use `--yes` instead
+> [debug] [2026-08-04T09:15:30.002Z] Setting target to production
+> [debug] [2026-08-04T09:15:30.038Z] Spinner invoked (Retrieving project…) with a 1000ms delay
+> [debug] [2026-08-04T09:15:30.039Z] Valid access token, skipping token refresh.
+> [debug] [2026-08-04T09:15:30.057Z] #1 → GET https://api.vercel.com/teams/team_N7HfUFk917h7VZCmzpo8NCf7
+> [debug] [2026-08-04T09:15:30.060Z] #2 → GET https://api.vercel.com/v9/projects/prj_kalcKYG3TeexUXruLG8JdUG5FFwG?teamId=team_N7HfUFk917h7VZCmzpo8NCf7
+> [debug] [2026-08-04T09:15:30.703Z] #1 ← 200 OK: sfo1::pwjh5-1785834930365-fa33ea8ad797 [646ms]
+> [debug] [2026-08-04T09:15:30.761Z] #2 ← 200 OK: sfo1::l6f7g-1785834930400-81a07d4d9286 [701ms]
+> [debug] [2026-08-04T09:15:30.765Z] Read local config from root directory (apps/api)
+> [debug] [2026-08-04T09:15:31.017Z] Spinner invoked (Deploying nahuels-projects-b5553abb/m-dops-api) with a 0ms delay
+[client-debug] 2026-08-04T09:15:31.017Z Creating deployment...
+[client-debug] 2026-08-04T09:15:31.017Z Provided 'path' is a directory.
+[client-debug] 2026-08-04T09:15:31.019Z Found 26 rules in .vercelignore
+[client-debug] 2026-08-04T09:15:31.019Z Building file tree...
+[client-debug] 2026-08-04T09:15:31.103Z Found 3179 files in the specified directory
+[client-debug] 2026-08-04T09:15:31.669Z Yielding a 'hashes-calculated' event with 1132 hashes
+[client-debug] 2026-08-04T09:15:31.670Z Using provided API URL: https://api.vercel.com
+[client-debug] 2026-08-04T09:15:31.670Z Using provided user agent: vercel 58.5.1 node-v24.15.0 win32 (x64)
+[client-debug] 2026-08-04T09:15:31.670Z Setting platform version to harcoded value 2
+[client-debug] 2026-08-04T09:15:31.670Z Creating the deployment and starting upload...
+[client-debug] 2026-08-04T09:15:31.671Z Determining necessary files for upload...
+[client-debug] 2026-08-04T09:15:31.671Z Creating deployment
+[client-debug] 2026-08-04T09:15:31.684Z Sending deployment creation API request
+[client-debug] 2026-08-04T09:15:33.537Z Deployment response: {"error":{"code":"missing_files","message":"Missing files","missing":["19a7eea45c5a941a50474d3470849134051b7211","1d54b5a8ef11282cfb6cf2aff0572791fed2bff0","b8baf1dfb865f132f29837fb43cbf3f493a09bf7","f6cb967469ab0cbb587e7dc89ad1c19cf276f2a2"]}}
+[client-debug] 2026-08-04T09:15:33.537Z Error: Deployment request status is 400
+[client-debug] 2026-08-04T09:15:33.537Z 4 files are required to upload
+[client-debug] 2026-08-04T09:15:33.538Z Yielding a 'file-count' event
+> [debug] [2026-08-04T09:15:33.538Z] Total files 1132, 4 changed
+> [debug] [2026-08-04T09:15:33.539Z] Spinner invoked (Uploading [--------------------] (0.0B/8.6KB)) with a 0ms delay
+[client-debug] 2026-08-04T09:15:33.539Z Building an upload list...
+[client-debug] 2026-08-04T09:15:33.542Z Starting upload
+[client-debug] 2026-08-04T09:15:33.543Z POST https://api.vercel.com/v2/files?teamId=team_N7HfUFk917h7VZCmzpo8NCf7
+[client-debug] 2026-08-04T09:15:33.546Z POST https://api.vercel.com/v2/files?teamId=team_N7HfUFk917h7VZCmzpo8NCf7
+[client-debug] 2026-08-04T09:15:33.547Z POST https://api.vercel.com/v2/files?teamId=team_N7HfUFk917h7VZCmzpo8NCf7
+[client-debug] 2026-08-04T09:15:33.548Z POST https://api.vercel.com/v2/files?teamId=team_N7HfUFk917h7VZCmzpo8NCf7
+> [debug] [2026-08-04T09:15:33.553Z] Spinner invoked (Uploading [======--------------] (2.6KB/8.6KB)) with a 0ms delay
+> [debug] [2026-08-04T09:15:33.554Z] Spinner invoked (Uploading [==========----------] (4.3KB/8.6KB)) with a 0ms delay
+> [debug] [2026-08-04T09:15:33.554Z] Spinner invoked (Uploading [====================] (8.6KB/8.6KB)) with a 0ms delay
+[client-debug] 2026-08-04T09:15:33.941Z DONE in 398ms: POST https://api.vercel.com/v2/files?teamId=team_N7HfUFk917h7VZCmzpo8NCf7
+[client-debug] 2026-08-04T09:15:33.941Z File 19a7eea45c5a941a50474d3470849134051b7211 (C:\Users\Usuario\Documents\md-ops\vercel-inspect.txt) uploaded
+[client-debug] 2026-08-04T09:15:33.941Z Yielding a 'file-uploaded' event
+> [debug] [2026-08-04T09:15:33.942Z] Uploaded: C:\Users\Usuario\Documents\md-ops\vercel-inspect.txt (2.62KB)
+[client-debug] 2026-08-04T09:15:34.213Z DONE in 664ms: POST https://api.vercel.com/v2/files?teamId=team_N7HfUFk917h7VZCmzpo8NCf7
+[client-debug] 2026-08-04T09:15:34.213Z File f6cb967469ab0cbb587e7dc89ad1c19cf276f2a2 (C:\Users\Usuario\Documents\md-ops\vercel-logs.txt) uploaded
+[client-debug] 2026-08-04T09:15:34.213Z Yielding a 'file-uploaded' event
+> [debug] [2026-08-04T09:15:34.213Z] Uploaded: C:\Users\Usuario\Documents\md-ops\vercel-logs.txt (2.35KB)
+[client-debug] 2026-08-04T09:15:34.228Z DONE in 681ms: POST https://api.vercel.com/v2/files?teamId=team_N7HfUFk917h7VZCmzpo8NCf7
+[client-debug] 2026-08-04T09:15:34.228Z File b8baf1dfb865f132f29837fb43cbf3f493a09bf7 (C:\Users\Usuario\Documents\md-ops\vercel-deploy2.txt) uploaded
+[client-debug] 2026-08-04T09:15:34.228Z Yielding a 'file-uploaded' event
+> [debug] [2026-08-04T09:15:34.228Z] Uploaded: C:\Users\Usuario\Documents\md-ops\vercel-deploy2.txt (1.96KB)
+[client-debug] 2026-08-04T09:15:34.233Z DONE in 687ms: POST https://api.vercel.com/v2/files?teamId=team_N7HfUFk917h7VZCmzpo8NCf7
+[client-debug] 2026-08-04T09:15:34.234Z File 1d54b5a8ef11282cfb6cf2aff0572791fed2bff0 (C:\Users\Usuario\Documents\md-ops\vercel-inspect.json) uploaded
+[client-debug] 2026-08-04T09:15:34.234Z Yielding a 'file-uploaded' event
+> [debug] [2026-08-04T09:15:34.234Z] Uploaded: C:\Users\Usuario\Documents\md-ops\vercel-inspect.json (1.71KB)
+[client-debug] 2026-08-04T09:15:34.234Z All files uploaded
+[client-debug] 2026-08-04T09:15:34.234Z Yielding a 'all-files-uploaded' event
+[client-debug] 2026-08-04T09:15:34.234Z Starting deployment creation
+[client-debug] 2026-08-04T09:15:34.234Z Creating deployment
+[client-debug] 2026-08-04T09:15:34.242Z Sending deployment creation API request
+[client-debug] 2026-08-04T09:15:39.163Z Deployment response: {"alias":["m-dops-api-nahuels-projects-b5553abb.vercel.app","m-dops-api-nahuelgranollers-1879-nahuels-projects-b5553abb.vercel.app"],"aliasAssigned":false,"automaticAliases":["m-dops-api-nahuels-projects-b5553abb.vercel.app","m-dops-api-nahuelgranollers-1879-nahuels-projects-b5553abb.vercel.app"],"bootedAt":1785834936141,"buildingAt":1785834936141,"buildSkipped":false,"createdAt":1785834936141,"creator":{"uid":"PvdDnDeiJ4NplkAFr2SeujDA","username":"nahuelgranollers-1879"},"id":"dpl_62XVaSS6wZWEXRdGK5RAWRY4KVs6","name":"m-dops-api","meta":{"githubCommitAuthorName":"md-ops","githubCommitAuthorEmail":"no-reply@example.com","githubCommitMessage":"deploy update","githubCommitOrg":"NahuelGranollers","githubCommitRef":"main","githubCommitRepo":"MDops","githubCommitSha":"7b0f8818e8eba1a29b6033912cf89a7b12813961","githubDeployment":"1","githubOrg":"NahuelGranollers","githubRepo":"MDops","gitDirty":"1","gitRootDirectory":"apps/api","actor":"github_copilot_vscode_agent"},"originCacheRegion":"iad1","project":{"id":"prj_kalcKYG3TeexUXruLG8JdUG5FFwG","name":"m-dops-api","framework":null},"public":false,"readyState":"INITIALIZING","regions":["iad1"],"source":"cli","status":"INITIALIZING","target":"production","team":{"id":"team_N7HfUFk917h7VZCmzpo8NCf7","name":"nahuel's projects","slug":"nahuels-projects-b5553abb"},"type":"LAMBDAS","url":"m-dops-ekq5goz78-nahuels-projects-b5553abb.vercel.app","version":2,"previewCommentsEnabled":true,"oidcTokenClaims":{"sub":"owner:nahuels-projects-b5553abb:project:m-dops-api:environment:production","iss":"https://oidc.vercel.com/nahuels-projects-b5553abb","scope":"owner:nahuels-projects-b5553abb:project:m-dops-api:environment:production","aud":"https://vercel.com/nahuels-projects-b5553abb","owner":"nahuels-projects-b5553abb","owner_id":"team_N7HfUFk917h7VZCmzpo8NCf7","project":"m-dops-api","project_id":"prj_kalcKYG3TeexUXruLG8JdUG5FFwG","environment":"production","plan":"hobby"},"lambdas":[{"id":"bld_diwn0paiw","createdAt":1785834935725,"entrypoint":".","readyState":"READY","readyStateAt":1785834935725,"output":[]}],"aliasAssignedAt":null,"build":{"env":[]},"createdIn":"sfo1","env":[],"functions":{"src/server.ts":{"runtime":"@vercel/node@5"}},"inspectorUrl":"https://vercel.com/nahuels-projects-b5553abb/m-dops-api/62XVaSS6wZWEXRdGK5RAWRY4KVs6","isInConcurrentBuildsQueue":false,"isInSystemBuildsQueue":true,"ownerId":"team_N7HfUFk917h7VZCmzpo8NCf7","plan":"hobby","projectId":"prj_kalcKYG3TeexUXruLG8JdUG5FFwG","resourceConfig":{"buildMachine":{"defaultPurchaseType":"standard","purchaseType":"standard","machineSelectionType":"fixed"}},"projectSettings":{"buildCommand":"cd ../.. && pnpm --filter @md-ops/shared build && pnpm --filter @md-ops/api build","devCommand":null,"framework":null,"commandForIgnoringBuildStep":null,"installCommand":"cd ../.. && corepack enable && pnpm install","outputDirectory":".","speedInsights":{"id":"DykJOy5MqZPUgZjA4icD63wW1Lq","hasData":false,"enabledAt":1781085455520},"webAnalytics":{"id":"fA0mIOSF8JbkWDLJqG06H0U9G","enabledAt":1781085463105},"nodeVersion":"24.x"},"routes":[{"handle":"filesystem"},{"src":"^(?:/(.*))$","dest":"/src/server.ts","check":true}],"config":{"version":1,"secureComputePrimaryRegion":null,"secureComputeFallbackRegion":null,"functionTimeout":300,"functionType":"fluid","functionMemoryType":"standard","isUsingActiveCPU":true,"resourceConfig":{"buildMachine":{"defaultPurchaseType":"standard","purchaseType":"standard","machineSelectionType":"fixed"},"buildQueue":{"configuration":"SKIP_NAMESPACE_QUEUE"}}},"attribution":{"commitMeta":{"name":"md-ops","email":"no-reply@example.com","isVerified":false}}}
+[client-debug] 2026-08-04T09:15:39.163Z Deployment created
+[client-debug] 2026-08-04T09:15:39.163Z Yielding a 'created' event
+  Inspect         https://vercel.com/nahuels-projects-b5553abb/m-dops-api/62XVaSS6wZWEXRdGK5RAWRY4KVs6
+  Production      https://m-dops-ekq5goz78-nahuels-projects-b5553abb.vercel.app
+https://m-dops-ekq5goz78-nahuels-projects-b5553abb.vercel.app> [debug] [2026-08-04T09:15:39.165Z] Spinner invoked (Building…) with a 0ms delay
+> [debug] [2026-08-04T09:15:39.166Z] #3 → GET https://api.vercel.com/v3/now/deployments/dpl_62XVaSS6wZWEXRdGK5RAWRY4KVs6/events?direction=forward&follow=1&format=lines&teamId=team_N7HfUFk917h7VZCmzpo8NCf7
+[client-debug] 2026-08-04T09:15:39.167Z Waiting for deployment to be ready...
+[client-debug] 2026-08-04T09:15:39.167Z Waiting for builds and the deployment to complete...
+[client-debug] 2026-08-04T09:15:41.417Z Deployment state changed to BUILDING
+[client-debug] 2026-08-04T09:15:41.418Z Yielding a 'building' event
+> [debug] [2026-08-04T09:15:41.418Z] Spinner invoked (Building…) with a 0ms delay
+> [debug] [2026-08-04T09:15:41.931Z] #3 ← 200 OK: sfo1::mr67r-1785834939106-6ff4de6e563f [2.76s]
+> [debug] [2026-08-04T09:15:41.933Z] Spinner invoked (Running build in Washington, D.C., USA (East) – iad1) with a 0ms delay
+> [debug] [2026-08-04T09:15:41.933Z] Spinner invoked (Build machine configuration: 2 cores, 8 GB) with a 0ms delay
+> [debug] [2026-08-04T09:15:41.933Z] Spinner invoked (Retrieving list of deployment files...) with a 0ms delay
+> [debug] [2026-08-04T09:15:43.062Z] Spinner invoked (Downloading 3179 deployment files...) with a 0ms delay
+[client-debug] 2026-08-04T09:15:47.145Z Yielding a 'error' event
+> [debug] [2026-08-04T09:15:47.149Z] Error: Error: Function Runtimes must have a valid version, for example `now-php@1.0.0`.
+Error: Function Runtimes must have a valid version, for example `now-php@1.0.0`.
+    at Now.handleDeploymentError (file:///C:/Users/Usuario/AppData/Local/npm-cache/_npx/67eb4586ca667318/node_modules/vercel/dist/chunks/chunk-IKIPDMQT.js:1632:12)
+    at processDeployment (file:///C:/Users/Usuario/AppData/Local/npm-cache/_npx/67eb4586ca667318/node_modules/vercel/dist/chunks/chunk-IKIPDMQT.js:1401:33)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async Now.create (file:///C:/Users/Usuario/AppData/Local/npm-cache/_npx/67eb4586ca667318/node_modules/vercel/dist/chunks/chunk-IKIPDMQT.js:1525:24)
+    at async createDeploy (file:///C:/Users/Usuario/AppData/Local/npm-cache/_npx/67eb4586ca667318/node_modules/vercel/dist/commands/deploy/index.js:196:12)
+    at async handleDefaultDeploy (file:///C:/Users/Usuario/AppData/Local/npm-cache/_npx/67eb4586ca667318/node_modules/vercel/dist/commands/deploy/index.js:1641:18)
+    at async _Span.trace (C:\Users\Usuario\AppData\Local\npm-cache\_npx\67eb4586ca667318\node_modules\@vercel\build-utils\dist\index.js:36295:14)
+    at async main (file:///C:/Users/Usuario/AppData/Local/npm-cache/_npx/67eb4586ca667318/node_modules/vercel/dist/index.js:2310:18)
+> [debug] [2026-08-04T09:15:47.149Z] handling error: Error: Function Runtimes must have a valid version, for example `now-php@1.0.0`.
+    at Now.handleDeploymentError (file:///C:/Users/Usuario/AppData/Local/npm-cache/_npx/67eb4586ca667318/node_modules/vercel/dist/chunks/chunk-IKIPDMQT.js:1632:12)
+    at processDeployment (file:///C:/Users/Usuario/AppData/Local/npm-cache/_npx/67eb4586ca667318/node_modules/vercel/dist/chunks/chunk-IKIPDMQT.js:1401:33)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async Now.create (file:///C:/Users/Usuario/AppData/Local/npm-cache/_npx/67eb4586ca667318/node_modules/vercel/dist/chunks/chunk-IKIPDMQT.js:1525:24)
+    at async createDeploy (file:///C:/Users/Usuario/AppData/Local/npm-cache/_npx/67eb4586ca667318/node_modules/vercel/dist/commands/deploy/index.js:196:12)
+    at async handleDefaultDeploy (file:///C:/Users/Usuario/AppData/Local/npm-cache/_npx/67eb4586ca667318/node_modules/vercel/dist/commands/deploy/index.js:1641:18)
+    at async _Span.trace (C:\Users\Usuario\AppData\Local\npm-cache\_npx\67eb4586ca667318\node_modules\@vercel\build-utils\dist\index.js:36295:14)
+    at async main (file:///C:/Users/Usuario/AppData/Local/npm-cache/_npx/67eb4586ca667318/node_modules/vercel/dist/index.js:2310:18)
+Error: Function Runtimes must have a valid version, for example `now-php@1.0.0`.
+> [debug] [2026-08-04T09:15:47.565Z] Vercel CLI 58.5.1 (Node.js 24.15.0)
+
+> [debug] [2026-08-04T09:15:48.289Z] Telemetry event tracked
+> [debug] [2026-08-04T09:15:48.346Z] Telemetry subprocess exited with code 0

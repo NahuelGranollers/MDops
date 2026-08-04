@@ -4,20 +4,14 @@
   "installCommand": "corepack enable && pnpm install",
   "buildCommand": "pnpm --filter @md-ops/shared build && pnpm --filter @md-ops/api build",
   "functions": {
-    "apps/api/src/server.ts": {
-      "runtime": "@vercel/node@5"
+    "src/server.ts": {
+      "runtime": "@vercel/node@5.9.5"
     }
   },
-  "builds": [
-    {
-      "src": "apps/api/src/server.ts",
-      "use": "@vercel/node@5"
-    }
-  ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "apps/api/src/server.ts"
+      "dest": "/src/server.ts"
     }
   ]
 }

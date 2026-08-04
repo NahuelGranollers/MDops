@@ -1,0 +1,17 @@
+npm warn Unknown project config "symlink". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+> [debug] [2026-08-04T09:15:11.703Z] Found config in file "C:\Users\Usuario\Documents\md-ops\vercel.json"
+Vercel CLI 58.5.1 (Node.js 24.15.0)
+> [debug] [2026-08-04T09:15:11.715Z] Agent/TTY/nonInteractive: isAgent=true agentName=github_copilot_vscode_agent stdin.isTTY=true --non-interactive=false explicitFalse=false => nonInteractive=false
+> [debug] [2026-08-04T09:15:11.715Z] user supplied known subcommand: "inspect"
+> [debug] [2026-08-04T09:15:11.970Z] handling error: ArgError: unknown or unexpected option: --output
+    at arg2 (file:///C:/Users/Usuario/AppData/Local/npm-cache/_npx/67eb4586ca667318/node_modules/vercel/dist/chunks/chunk-XLKFJPMT.js:91:23)
+    at parseArguments (file:///C:/Users/Usuario/AppData/Local/npm-cache/_npx/67eb4586ca667318/node_modules/vercel/dist/chunks/chunk-XLKFJPMT.js:137:61)
+    at inspect6 (file:///C:/Users/Usuario/AppData/Local/npm-cache/_npx/67eb4586ca667318/node_modules/vercel/dist/commands-bulk.js:43991:23)
+    at file:///C:/Users/Usuario/AppData/Local/npm-cache/_npx/67eb4586ca667318/node_modules/vercel/dist/index.js:2310:106
+    at _Span.trace (C:\Users\Usuario\AppData\Local\npm-cache\_npx\67eb4586ca667318\node_modules\@vercel\build-utils\dist\index.js:36295:20)
+    at main (file:///C:/Users/Usuario/AppData/Local/npm-cache/_npx/67eb4586ca667318/node_modules/vercel/dist/index.js:2310:94)
+Error: unknown or unexpected option: --output
+> [debug] [2026-08-04T09:15:12.416Z] Vercel CLI 58.5.1 (Node.js 24.15.0)
+
+> [debug] [2026-08-04T09:15:13.049Z] Telemetry event tracked
+> [debug] [2026-08-04T09:15:13.113Z] Telemetry subprocess exited with code 0
