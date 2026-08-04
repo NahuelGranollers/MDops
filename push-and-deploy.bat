@@ -127,9 +127,18 @@ echo == Listo ==
 echo Frontend: https://nahuelgranollers.github.io/MDops/
 echo API: https://m-dops-api.vercel.app
 echo.
+rem -- Comprobacion rapida API (dominio configurable)
+set "API_URL=https://m-dops-api.vercel.app"
+if defined MDO_API_URL set "API_URL=%MDO_API_URL%"
+set /p "CUSTOM_API_URL=API URL para comprobaciones [%API_URL%]: "
+if not "%CUSTOM_API_URL%"=="" set "API_URL=%CUSTOM_API_URL%"
+
+echo API: %API_URL%
+echo.
 echo == Comprobacion rapida API ==
-powershell -NoProfile -ExecutionPolicy Bypass -Command "try { $r=Invoke-WebRequest -Uri 'https://m-dops-api.vercel.app/health' -UseBasicParsing -TimeoutSec 20; Write-Host ('Health: ' + $r.StatusCode + ' ' + $r.Content) } catch { Write-Host ('Health ERROR: ' + $_.Exception.Message) }"
-powershell -NoProfile -ExecutionPolicy Bypass -Command "try { $r=Invoke-WebRequest -Uri 'https://m-dops-api.vercel.app/api/auth/bootstrap-status' -UseBasicParsing -TimeoutSec 20; Write-Host ('Bootstrap: ' + $r.StatusCode + ' ' + $r.Content) } catch { Write-Host ('Bootstrap ERROR: ' + $_.Exception.Message) }"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "try { $r=Invoke-WebRequest -Uri '%API_URL%/health' -UseBasicParsing -TimeoutSec 20; Write-Host ('Health: ' + $r.StatusCode + ' ' + $r.Content) } catch { Write-Host ('Health ERROR: ' + $_.Exception.Message) }"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "try { $r=Invoke-WebRequest -Uri '%API_URL%/bootstrap' -UseBasicParsing -TimeoutSec 20; Write-Host ('Bootstrap root: ' + $r.StatusCode + ' ' + $r.Content) } catch { Write-Host ('Bootstrap root ERROR: ' + $_.Exception.Message) }"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "try { $r=Invoke-WebRequest -Uri '%API_URL%/api/auth/bootstrap-status' -UseBasicParsing -TimeoutSec 20; Write-Host ('Bootstrap API: ' + $r.StatusCode + ' ' + $r.Content) } catch { Write-Host ('Bootstrap API ERROR: ' + $_.Exception.Message) }"
 echo.
 pause
 exit /b 0
