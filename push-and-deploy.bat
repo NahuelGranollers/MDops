@@ -1,6 +1,12 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
 
+rem -- Non-interactive support: /y or --yes, or env MDO_NONINTERACTIVE=1
+set "NONINTERACTIVE=0"
+if /i "%1"=="/y" set "NONINTERACTIVE=1"
+if /i "%1"=="--yes" set "NONINTERACTIVE=1"
+if defined MDO_NONINTERACTIVE set "NONINTERACTIVE=%MDO_NONINTERACTIVE%"
+
 cd /d "%~dp0"
 title MD Ops - Push y Deploy
 
