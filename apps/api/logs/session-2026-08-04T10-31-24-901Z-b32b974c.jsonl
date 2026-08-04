@@ -1,0 +1,1 @@
+{"sessionId":"b32b974c-11c2-4a50-b7fc-9ab1291ae3d7","timestamp":"2026-08-04T10:31:24.902Z","type":"session_start","message":"MD Ops API session started","data":{"nodeEnv":"production","apiPort":4100,"uploadDir":"./uploads"}}

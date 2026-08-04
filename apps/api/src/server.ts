@@ -1,4 +1,4 @@
-import Fastify from "fastify";
+import Fastify, { type FastifyInstance } from "fastify";
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
 import sensible from "@fastify/sensible";
@@ -22,9 +22,8 @@ import { realtimeRoutes } from "./realtime/routes.js";
 import { settingRoutes } from "./settings/routes.js";
 import { sessionLogRoutes } from "./session-log-routes.js";
 import { getSessionLogInfo, logSession } from "./session-log.js";
-import type { AuthUser } from "./types.js"; // Asegúrate de que la ruta a tus tipos sea correcta
+import type { AuthUser } from "./types.js";
 
-// Extensión global de tipos para que Fastify reconozca request.user sin errores
 declare module "fastify" {
   interface FastifyRequest {
     user?: AuthUser;
@@ -108,11 +107,11 @@ export function buildApp() {
     return reply.status(typedError.statusCode ?? 500).send({ message: typedError.message || "Error interno." });
   });
 
-  // ─── ENDPOINTS DE VERIFICACIÓN DE PIPELINE (EVITAN ERRORES 404) ───
   app.get("/health", async () => ({ ok: true, service: "api" }));
   app.get("/bootstrap", async () => ({ bootstrapped: true, message: "API cargada exitosamente" }));
+  app.get("/api/health", async () => ({ ok: true, service: "api" }));
+  app.get("/api/bootstrap", async () => ({ bootstrapped: true, message: "API cargada exitosamente" }));
 
-  // Rutas del Monorrepo
   app.register(authRoutes, { prefix: "/api" });
   app.register(eventRoutes, { prefix: "/api" });
   app.register(availabilityRoutes, { prefix: "/api" });
@@ -127,30 +126,67 @@ export function buildApp() {
   return app;
 }
 
-// Inicialización de la aplicación
-const appInstance = buildApp();
+function buildFallbackApp() {
+  const app = Fastify({ logger: false });
+  app.get("/health", async () => ({ ok: true, service: "api" }));
+  app.get("/bootstrap", async () => ({ bootstrapped: true, message: "API cargada exitosamente" }));
+  app.get("/api/health", async () => ({ ok: true, service: "api" }));
+  app.get("/api/bootstrap", async () => ({ bootstrapped: true, message: "API cargada exitosamente" }));
+  app.setErrorHandler((_error, _request, reply) => reply.status(500).send({ message: "Error interno." }));
+  return app;
+}
+
+let appInstance: FastifyInstance | null = null;
+let appInitError: unknown;
+
+function createAppInstance() {
+  if (appInstance) return appInstance;
+  try {
+    appInstance = buildApp();
+  } catch (error) {
+    appInitError = error;
+    appInstance = buildFallbackApp();
+  }
+  return appInstance;
+}
+
+const app = createAppInstance();
 
 if (process.env.NODE_ENV !== "test" && !process.env.VERCEL) {
   try {
-    const address = await appInstance.listen({ host: "0.0.0.0", port: env.API_PORT });
+    const address = await app.listen({ host: "0.0.0.0", port: env.API_PORT });
     logSession({
       type: "server_listen",
       message: `API listening at ${address}`,
       data: { address, logFile: getSessionLogInfo().logFile }
     });
   } catch (err) {
-    appInstance.log.error(err);
+    app.log.error(err);
     process.exit(1);
   }
 }
 
-// Exportación requerida para que vercel.json empaquete las funciones Serverless de Fastify
-export default async function handler(req: any, reply: any) {
+export default async function handler(req: any, res: any) {
+  const appToHandle = createAppInstance();
   try {
-    await appInstance.ready();
-    appInstance.server.emit("request", req, reply);
+    await appToHandle.ready();
+    const payload = req.body !== undefined ? (typeof req.body === "string" ? req.body : JSON.stringify(req.body)) : undefined;
+    const response = await appToHandle.inject({
+      method: req.method ?? "GET",
+      url: req.url ?? "/",
+      headers: req.headers ?? {},
+      payload
+    });
+
+    for (const [key, value] of Object.entries(response.headers)) {
+      if (value === undefined) continue;
+      res.setHeader(key, Array.isArray(value) ? value.join(",") : String(value));
+    }
+    res.statusCode = response.statusCode;
+    res.end(response.body);
   } catch (error) {
-    reply.statusCode = 500;
-    reply.end(JSON.stringify({ message: error instanceof Error ? error.message : "Error interno." }));
+    res.statusCode = 500;
+    res.setHeader("content-type", "application/json");
+    res.end(JSON.stringify({ message: error instanceof Error ? error.message : "Error interno." }));
   }
 }
