@@ -26,7 +26,7 @@ const schema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PUBLIC_APP_URL: z.string().default("http://localhost:3000"),
   API_PORT: z.coerce.number().default(4000),
-  DATABASE_URL: z.string().min(1),
+  DATABASE_URL: z.string().min(1).optional(),
   JWT_ACCESS_SECRET: z.string().min(24).default("dev_access_secret_change_me_please"),
   JWT_REFRESH_SECRET: z.string().min(24).default("dev_refresh_secret_change_me_please"),
   ACCESS_TOKEN_TTL: safeTtl.default("15m"),

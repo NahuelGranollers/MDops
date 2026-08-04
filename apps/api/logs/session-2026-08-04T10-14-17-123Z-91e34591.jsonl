@@ -1,0 +1,2 @@
+{"sessionId":"91e34591-a6fe-42da-bae4-134baaaa3e43","timestamp":"2026-08-04T10:14:17.125Z","type":"session_start","message":"MD Ops API session started","data":{"nodeEnv":"development","apiPort":4000,"uploadDir":"./uploads"}}
+{"sessionId":"91e34591-a6fe-42da-bae4-134baaaa3e43","timestamp":"2026-08-04T10:14:17.748Z","type":"server_listen","message":"API listening at http://127.0.0.1:4000","data":{"address":"http://127.0.0.1:4000","logFile":"C:\\Users\\Usuario\\Documents\\md-ops\\apps\\api\\logs\\session-2026-08-04T10-14-17-123Z-91e34591.jsonl"}}

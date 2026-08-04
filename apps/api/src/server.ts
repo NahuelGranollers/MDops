@@ -146,6 +146,11 @@ if (process.env.NODE_ENV !== "test" && !process.env.VERCEL) {
 
 // Exportación requerida para que vercel.json empaquete las funciones Serverless de Fastify
 export default async function handler(req: any, reply: any) {
-  await appInstance.ready();
-  appInstance.server.emit("request", req, reply);
+  try {
+    await appInstance.ready();
+    appInstance.server.emit("request", req, reply);
+  } catch (error) {
+    reply.statusCode = 500;
+    reply.end(JSON.stringify({ message: error instanceof Error ? error.message : "Error interno." }));
+  }
 }
