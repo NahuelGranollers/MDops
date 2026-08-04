@@ -12,3 +12,5 @@ dev-server.log
 .vercel
 .env*
 .mdops-cloud-tools
+.pnpm-store
+*.tsbuildinfo
