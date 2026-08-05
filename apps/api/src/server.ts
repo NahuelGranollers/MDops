@@ -23,7 +23,8 @@ import { settingRoutes } from "./settings/routes.js";
 import { sessionLogRoutes } from "./session-log-routes.js";
 import { getSessionLogInfo, logSession } from "./session-log.js";
 import type { AuthUser } from "./types.js";
-
+function createAppInstance() {
+  if (appInstance) return appInstance;
 declare module "fastify" {
   interface FastifyRequest {
     user?: AuthUser;
@@ -245,4 +246,18 @@ export default async function handler(req: any, res: any) {
       stack: error instanceof Error ? error.stack : null 
     }));
   }
+}
+  if ((globalThis as any)._envValidationError) {
+    appInitError = (globalThis as any)._envValidationError;
+    appInstance = buildFallbackApp((globalThis as any)._envValidationError);
+    return appInstance;
+  }
+
+  try {
+    appInstance = buildApp();
+  } catch (error) {
+    appInitError = error;
+    appInstance = buildFallbackApp(error);
+  }
+  return appInstance;
 }
