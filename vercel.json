@@ -8,10 +8,10 @@
       "runtime": "@vercel/node@5.9.5"
     }
   },
-  "routes": [
+  "rewrites": [
     {
-      "src": "/(.*)",
-      "dest": "/api/index"
+      "source": "/((?!.*\\.(?:ico|png|jpg|jpeg|gif|svg|css|js)$).*)" ,
+      "destination": "/api/index"
     }
   ]
 }
