@@ -50,9 +50,14 @@ export function buildApp() {
   app.register(cors, { origin: corsOrigins(), credentials: true, methods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"] });
   app.register(rateLimit, { max: 120, timeWindow: "1 minute" });
   app.register(multipart, { limits: { fileSize: env.MAX_UPLOAD_MB * 1024 * 1024 } });
-  const uploadRoot = path.resolve(env.UPLOAD_DIR);
-  mkdirSync(uploadRoot, { recursive: true });
-  app.register(staticFiles, { root: uploadRoot, prefix: "/uploads/" });
+  
+  try {
+    const uploadRoot = path.resolve(env.UPLOAD_DIR || "/tmp");
+    mkdirSync(uploadRoot, { recursive: true });
+    app.register(staticFiles, { root: uploadRoot, prefix: "/uploads/" });
+  } catch (e) {
+    console.error("Error inicializando directorio de subidas:", e);
+  }
 
   app.addHook("onRequest", async (request) => {
     requestStarts.set(request, Date.now());
@@ -134,18 +139,28 @@ export function buildApp() {
   return app;
 }
 
-function buildFallbackApp() {
+function buildFallbackApp(initError: any) {
   const app = Fastify({ logger: false });
-  app.get("/health", async () => ({ ok: true, service: "api" }));
-  app.get("/bootstrap", async () => ({ bootstrapped: true, message: "API cargada exitosamente" }));
-  app.get("/api/health", async () => ({ ok: true, service: "api" }));
-  app.get("/api/bootstrap", async () => ({ bootstrapped: true, message: "API cargada exitosamente" }));
-  app.setErrorHandler((_error, _request, reply) => reply.status(500).send({ message: "Error interno." }));
+  
+  // Rutas de emergencia que exponen el error para depuración rápida
+  const debugHandler = async () => ({
+    ok: false,
+    error: initError instanceof Error ? initError.message : String(initError),
+    stack: initError instanceof Error ? initError.stack : null,
+    hint: "Revisa las variables de entorno de Vercel o inicializaciones de módulos globales (Prisma, Zod, env.js)"
+  });
+
+  app.get("/health", debugHandler);
+  app.get("/bootstrap", debugHandler);
+  app.get("/api/health", debugHandler);
+  app.get("/api/bootstrap", debugHandler);
+  
+  app.setErrorHandler((_error, _request, reply) => reply.status(500).send({ message: "Fallback app error." }));
   return app;
 }
 
 let appInstance: FastifyInstance | null = null;
-let appInitError: unknown;
+let appInitError: unknown = null;
 
 function createAppInstance() {
   if (appInstance) return appInstance;
@@ -153,7 +168,7 @@ function createAppInstance() {
     appInstance = buildApp();
   } catch (error) {
     appInitError = error;
-    appInstance = buildFallbackApp();
+    appInstance = buildFallbackApp(error);
   }
   return appInstance;
 }
@@ -177,7 +192,6 @@ if (process.env.NODE_ENV !== "test" && !process.env.VERCEL) {
 export default async function handler(req: any, res: any) {
   const origin = req.headers.origin || "*";
 
-  // Interceptar de manera inmediata las peticiones Preflight para Vercel
   if (req.method === "OPTIONS") {
     res.statusCode = 204;
     res.setHeader("Access-Control-Allow-Origin", origin);
@@ -188,7 +202,22 @@ export default async function handler(req: any, res: any) {
     return;
   }
 
+  // Asegura capturar el error de inicialización actual antes de procesar la petición
   const appToHandle = createAppInstance();
+  
+  if (appInitError) {
+    res.statusCode = 500;
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("content-type", "application/json");
+    res.end(JSON.stringify({
+      message: "Error crítico durante buildApp()",
+      error: appInitError instanceof Error ? appInitError.message : String(appInitError),
+      stack: appInitError instanceof Error ? appInitError.stack : null
+    }));
+    return;
+  }
+
   try {
     await appToHandle.ready();
     const payload = req.body !== undefined ? (typeof req.body === "string" ? req.body : JSON.stringify(req.body)) : undefined;
@@ -207,10 +236,13 @@ export default async function handler(req: any, res: any) {
     res.end(response.body);
   } catch (error) {
     res.statusCode = 500;
-    // Si la inyección o inicialización falla, asegura mantener las cabeceras para que el navegador muestre el error real de red y no uno de CORS
     res.setHeader("Access-Control-Allow-Origin", origin);
     res.setHeader("Access-Control-Allow-Credentials", "true");
     res.setHeader("content-type", "application/json");
-    res.end(JSON.stringify({ message: error instanceof Error ? error.message : "Error interno." }));
+    res.end(JSON.stringify({ 
+      message: "Error en la inyección de la petición", 
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : null 
+    }));
   }
 }
