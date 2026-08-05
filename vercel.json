@@ -4,14 +4,14 @@
   "installCommand": "corepack enable && pnpm install",
   "buildCommand": "pnpm --filter @md-ops/shared build && pnpm --filter @md-ops/api prisma generate && pnpm --filter @md-ops/api build",
   "functions": {
-    "apps/api/api/**/*.ts": {
+    "api/**/*.ts": {
       "runtime": "@vercel/node@5.9.5"
     }
   },
   "rewrites": [
     {
       "source": "/((?!.*\\.(?:ico|png|jpg|jpeg|gif|svg|css|js)$).*)",
-      "destination": "/apps/api/api/index"
+      "destination": "/api/index"
     }
   ]
 }
