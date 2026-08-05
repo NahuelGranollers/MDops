@@ -71,33 +71,41 @@ export function buildApp() {
   app.addHook("onResponse", async (request, reply) => {
     const durationMs = Date.now() - (requestStarts.get(request) ?? Date.now());
     if (reply.statusCode >= 400 || durationMs >= env.SESSION_LOG_SLOW_MS || request.method !== "GET") {
+      try {
+        logSession({
+          type: reply.statusCode >= 400 ? "http_error_response" : "http_request",
+          tenantId: request.user?.tenantId,
+          actorId: request.user?.id,
+          requestId: request.id,
+          method: request.method,
+          url: request.url,
+          statusCode: reply.statusCode,
+          durationMs
+        });
+      } catch (e) {
+        app.log.error(e, "Error al registrar logSession en onResponse");
+      }
+    }
+  });
+
+  app.addHook("onError", async (request, reply, error) => {
+    const durationMs = Date.now() - (requestStarts.get(request) ?? Date.now());
+    try {
       logSession({
-        type: reply.statusCode >= 400 ? "http_error_response" : "http_request",
+        type: "http_exception",
         tenantId: request.user?.tenantId,
         actorId: request.user?.id,
         requestId: request.id,
         method: request.method,
         url: request.url,
         statusCode: reply.statusCode,
-        durationMs
+        durationMs,
+        message: error.message,
+        data: { name: error.name, stack: error.stack }
       });
+    } catch (e) {
+      app.log.error(e, "Error al registrar logSession en onError");
     }
-  });
-
-  app.addHook("onError", async (request, reply, error) => {
-    const durationMs = Date.now() - (requestStarts.get(request) ?? Date.now());
-    logSession({
-      type: "http_exception",
-      tenantId: request.user?.tenantId,
-      actorId: request.user?.id,
-      requestId: request.id,
-      method: request.method,
-      url: request.url,
-      statusCode: reply.statusCode,
-      durationMs,
-      message: error.message,
-      data: { name: error.name, stack: error.stack }
-    });
   });
 
   app.setErrorHandler((error, _request, reply) => {
@@ -167,6 +175,19 @@ if (process.env.NODE_ENV !== "test" && !process.env.VERCEL) {
 }
 
 export default async function handler(req: any, res: any) {
+  const origin = req.headers.origin || "*";
+
+  // Interceptar de manera inmediata las peticiones Preflight para Vercel
+  if (req.method === "OPTIONS") {
+    res.statusCode = 204;
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Methods", "GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, Accept");
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.end();
+    return;
+  }
+
   const appToHandle = createAppInstance();
   try {
     await appToHandle.ready();
@@ -186,6 +207,9 @@ export default async function handler(req: any, res: any) {
     res.end(response.body);
   } catch (error) {
     res.statusCode = 500;
+    // Si la inyección o inicialización falla, asegura mantener las cabeceras para que el navegador muestre el error real de red y no uno de CORS
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Credentials", "true");
     res.setHeader("content-type", "application/json");
     res.end(JSON.stringify({ message: error instanceof Error ? error.message : "Error interno." }));
   }
